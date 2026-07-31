@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendario Lavoro 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="header">
+            <h1>Gestione Calendario 2026</h1>
+            <p>Seleziona un segnagiorno e clicca sulle date per assegnarlo</p>
+            <div class="header-actions">
+                <button id="btn-export-pdf" class="export-btn">📄 Esporta PDF</button>
+            </div>
+        </header>
+
+        <div class="print-summary" id="print-summary">
+            <h2>Riepilogo Assegnazioni 2026</h2>
+            <div class="print-counters">
+                <div>Ferie Rimanenti: <span id="print-count-ferie">10</span>/10</div>
+                <div>Missioni Rimanenti: <span id="print-count-missione">15</span>/15</div>
+                <div>Smartworking Rimanenti: <span id="print-count-smartworking">45</span>/45</div>
+                <div>Permessi Rimanenti: <span id="print-count-permesso">14</span>h/<span id="print-total-permesso">14</span>h</div>
+                <div>Ex Festività Rimanenti: <span id="print-count-exfest">1</span>/<span id="print-total-exfest">1</span></div>
+            </div>
+        </div>
+
+        <div class="dashboard" id="dashboard-menu">
+            <div class="card marker-card" id="btn-ferie" data-type="ferie">
+                <span class="marker-dot ferie-color"></span>
+                <span class="marker-title">Ferie</span>
+                <span class="marker-badge"><span id="count-ferie">10</span>/10</span>
+            </div>
+            <div class="card marker-card" id="btn-missione" data-type="missione">
+                <span class="marker-dot missione-color"></span>
+                <span class="marker-title">Missione</span>
+                <span class="marker-badge"><span id="count-missione">15</span>/15</span>
+            </div>
+            <div class="card marker-card" id="btn-smartworking" data-type="smartworking">
+                <span class="marker-dot smartworking-color"></span>
+                <span class="marker-title">Smart</span>
+                <span class="marker-badge"><span id="count-smartworking">45</span>/45</span>
+            </div>
+            <div class="card marker-card" id="btn-permesso" data-type="permesso">
+                <span class="marker-dot permesso-color"></span>
+                <span class="marker-title">Permesso</span>
+                <span class="marker-badge"><span id="count-permesso">14</span>h/<span id="total-permesso" class="editable-total" title="Modifica ore totali">14</span>h <span id="edit-permesso-trigger" class="edit-icon">✏️</span></span>
+            </div>
+            <div class="card marker-card" id="btn-exfest" data-type="exfest">
+                <span class="marker-dot exfest-color"></span>
+                <span class="marker-title">Ex Fest.</span>
+                <span class="marker-badge"><span id="count-exfest">1</span>/<span id="total-exfest" class="editable-total" title="Modifica totali">1</span> <span id="edit-exfest-trigger" class="edit-icon">✏️</span></span>
+            </div>
+            <div class="card marker-card" id="btn-ct-mi" data-type="ct-mi">
+                <span class="marker-dot ct-mi-border"></span>
+                <span class="marker-title">CT-MI</span>
+            </div>
+            <div class="card marker-card" id="btn-mi-ct" data-type="mi-ct">
+                <span class="marker-dot mi-ct-border"></span>
+                <span class="marker-title">MI-CT</span>
+            </div>
+            <div class="card marker-card" id="btn-lock" data-type="lock">
+                <span class="marker-icon">🔒</span>
+                <span class="marker-title">Blocca Date</span>
+            </div>
+            <div class="card marker-card" id="btn-eraser" data-type="eraser">
+                <span class="marker-icon">✖</span>
+                <span class="marker-title">Rimuovi</span>
+            </div>
+        </div>
+
+        <div class="calendar-container" id="calendar-container">
+            <!-- I mesi verranno generati dinamicamente via JS -->
+        </div>
+    </div>
+    
+    <!-- Modal Inserimento Ore Permesso -->
+    <div id="permesso-modal" class="modal-backdrop" style="display:none;">
+        <div class="modal-content">
+            <h3>Inserisci Ore di Permesso</h3>
+            <p id="permesso-modal-date" class="modal-subtitle">Giorno selezionato</p>
+
+            <div class="hours-selector">
+                <button type="button" class="hour-btn" data-hours="1">1h</button>
+                <button type="button" class="hour-btn" data-hours="2">2h</button>
+                <button type="button" class="hour-btn" data-hours="3">3h</button>
+                <button type="button" class="hour-btn" data-hours="4">4h</button>
+                <button type="button" class="hour-btn" data-hours="6">6h</button>
+                <button type="button" class="hour-btn" data-hours="8">8h</button>
+            </div>
+
+            <div class="custom-hours-wrapper">
+                <label for="custom-hours-num">Oppure specifica ore:</label>
+                <div class="input-with-unit">
+                    <input type="number" id="custom-hours-num" min="0.5" max="24" step="0.5" placeholder="es. 2.5">
+                    <span>ore</span>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" id="permesso-modal-delete" class="modal-btn delete" style="display:none;">Rimuovi</button>
+                <button type="button" id="permesso-modal-cancel" class="modal-btn cancel">Annulla</button>
+                <button type="button" id="permesso-modal-confirm" class="modal-btn confirm">Conferma</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
