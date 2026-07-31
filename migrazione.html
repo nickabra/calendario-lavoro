@@ -96,20 +96,20 @@
         route: readJSON(KEYS.route)
     };
 
-    var counts = {
-        'giorni assegnati': Object.keys(payload.assignments).length,
-        'voli segnati': Object.keys(payload.overlays).length,
-        'date bloccate': Object.keys(payload.lockedDates).length
-    };
-    var total = counts['giorni assegnati'] + counts['voli segnati'] + counts['date bloccate'];
+    var counts = [
+        { n: Object.keys(payload.assignments).length, one: 'giorno assegnato', many: 'giorni assegnati' },
+        { n: Object.keys(payload.overlays).length, one: 'volo segnato', many: 'voli segnati' },
+        { n: Object.keys(payload.lockedDates).length, one: 'data bloccata', many: 'date bloccate' }
+    ];
+    var total = counts.reduce(function (sum, c) { return sum + c.n; }, 0);
     var result = document.getElementById('result');
     var button = document.getElementById('download');
 
     if (total > 0) {
         var items = '';
-        for (var label in counts) {
-            items += '<li>' + counts[label] + ' ' + label + '</li>';
-        }
+        counts.forEach(function (c) {
+            items += '<li>' + c.n + ' ' + (c.n === 1 ? c.one : c.many) + '</li>';
+        });
         result.innerHTML =
             '<div class="found"><strong>Dati trovati.</strong><ul>' + items + '</ul></div>';
         button.disabled = false;
