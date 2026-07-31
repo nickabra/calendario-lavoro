@@ -4,80 +4,128 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calendario Lavoro 2026</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="app-container">
         <header class="header">
             <h1>Gestione Calendario 2026</h1>
-            <p>Seleziona un segnagiorno e clicca sulle date per assegnarlo</p>
+            <p>Seleziona un segnagiorno e clicca sulle date. Trascina per assegnare più giorni in una volta.</p>
             <div class="header-actions">
-                <button id="btn-export-pdf" class="export-btn">📄 Esporta PDF</button>
+                <button id="btn-export-pdf" class="action-btn primary">📄 Esporta PDF</button>
+                <button id="btn-export-json" class="action-btn">💾 Backup</button>
+                <button id="btn-import-json" class="action-btn">📂 Importa</button>
+                <button id="btn-reset" class="action-btn danger">🗑 Azzera</button>
+                <input type="file" id="import-file" accept="application/json,.json" hidden>
             </div>
+            <p class="shortcuts-hint">
+                Scorciatoie: <kbd>1</kbd>–<kbd>5</kbd> segnagiorni · <kbd>6</kbd><kbd>7</kbd> voli ·
+                <kbd>E</kbd> gomma · <kbd>L</kbd> lucchetto · <kbd>Esc</kbd> deseleziona
+            </p>
         </header>
 
         <div class="print-summary" id="print-summary">
             <h2>Riepilogo Assegnazioni 2026</h2>
             <div class="print-counters">
-                <div>Ferie Rimanenti: <span id="print-count-ferie">10</span>/10</div>
-                <div>Missioni Rimanenti: <span id="print-count-missione">15</span>/15</div>
-                <div>Smartworking Rimanenti: <span id="print-count-smartworking">45</span>/45</div>
-                <div>Permessi Rimanenti: <span id="print-count-permesso">14</span>h/<span id="print-total-permesso">14</span>h</div>
-                <div>Ex Festività Rimanenti: <span id="print-count-exfest">1</span>/<span id="print-total-exfest">1</span></div>
+                <div>Ferie rimanenti: <span data-count="ferie">10</span>/<span data-total="ferie">10</span></div>
+                <div>Missioni rimanenti: <span data-count="missione">15</span>/<span data-total="missione">15</span></div>
+                <div>Smartworking rimanenti: <span data-count="smartworking">45</span>/<span data-total="smartworking">45</span></div>
+                <div>Permessi rimanenti: <span data-count="permesso">14</span>h/<span data-total="permesso">14</span>h</div>
+                <div>Ex festività rimanenti: <span data-count="exfest">1</span>/<span data-total="exfest">1</span></div>
+            </div>
+            <div class="print-legend">
+                <span><i class="legend-swatch ferie-color"></i>Ferie</span>
+                <span><i class="legend-swatch missione-color"></i>Missione</span>
+                <span><i class="legend-swatch smartworking-color"></i>Smartworking</span>
+                <span><i class="legend-swatch permesso-color"></i>Permesso</span>
+                <span><i class="legend-swatch exfest-color"></i>Ex festività</span>
+                <span><i class="legend-swatch ct-mi-border"></i>Volo andata</span>
+                <span><i class="legend-swatch mi-ct-border"></i>Volo ritorno</span>
             </div>
         </div>
 
         <div class="dashboard" id="dashboard-menu">
-            <div class="card marker-card" id="btn-ferie" data-type="ferie">
+            <div class="card marker-card" data-type="ferie">
                 <span class="marker-dot ferie-color"></span>
                 <span class="marker-title">Ferie</span>
-                <span class="marker-badge"><span id="count-ferie">10</span>/10</span>
+                <span class="marker-badge">
+                    <span data-count="ferie">10</span>/<span class="editable-total" data-total="ferie" title="Modifica il totale">10</span>
+                    <span class="edit-icon" data-edit="ferie">✏️</span>
+                </span>
             </div>
-            <div class="card marker-card" id="btn-missione" data-type="missione">
+            <div class="card marker-card" data-type="missione">
                 <span class="marker-dot missione-color"></span>
                 <span class="marker-title">Missione</span>
-                <span class="marker-badge"><span id="count-missione">15</span>/15</span>
+                <span class="marker-badge">
+                    <span data-count="missione">15</span>/<span class="editable-total" data-total="missione" title="Modifica il totale">15</span>
+                    <span class="edit-icon" data-edit="missione">✏️</span>
+                </span>
             </div>
-            <div class="card marker-card" id="btn-smartworking" data-type="smartworking">
+            <div class="card marker-card" data-type="smartworking">
                 <span class="marker-dot smartworking-color"></span>
                 <span class="marker-title">Smart</span>
-                <span class="marker-badge"><span id="count-smartworking">45</span>/45</span>
+                <span class="marker-badge">
+                    <span data-count="smartworking">45</span>/<span class="editable-total" data-total="smartworking" title="Modifica il totale">45</span>
+                    <span class="edit-icon" data-edit="smartworking">✏️</span>
+                </span>
             </div>
-            <div class="card marker-card" id="btn-permesso" data-type="permesso">
+            <div class="card marker-card" data-type="permesso">
                 <span class="marker-dot permesso-color"></span>
                 <span class="marker-title">Permesso</span>
-                <span class="marker-badge"><span id="count-permesso">14</span>h/<span id="total-permesso" class="editable-total" title="Modifica ore totali">14</span>h <span id="edit-permesso-trigger" class="edit-icon">✏️</span></span>
+                <span class="marker-badge">
+                    <span data-count="permesso">14</span>h/<span class="editable-total" data-total="permesso" title="Modifica il totale">14</span>h
+                    <span class="edit-icon" data-edit="permesso">✏️</span>
+                </span>
             </div>
-            <div class="card marker-card" id="btn-exfest" data-type="exfest">
+            <div class="card marker-card" data-type="exfest">
                 <span class="marker-dot exfest-color"></span>
                 <span class="marker-title">Ex Fest.</span>
-                <span class="marker-badge"><span id="count-exfest">1</span>/<span id="total-exfest" class="editable-total" title="Modifica totali">1</span> <span id="edit-exfest-trigger" class="edit-icon">✏️</span></span>
+                <span class="marker-badge">
+                    <span data-count="exfest">1</span>/<span class="editable-total" data-total="exfest" title="Modifica il totale">1</span>
+                    <span class="edit-icon" data-edit="exfest">✏️</span>
+                </span>
             </div>
-            <div class="card marker-card" id="btn-ct-mi" data-type="ct-mi">
+            <div class="card marker-card" data-type="ct-mi">
                 <span class="marker-dot ct-mi-border"></span>
-                <span class="marker-title">CT-MI</span>
+                <span class="marker-title">Volo andata</span>
             </div>
-            <div class="card marker-card" id="btn-mi-ct" data-type="mi-ct">
+            <div class="card marker-card" data-type="mi-ct">
                 <span class="marker-dot mi-ct-border"></span>
-                <span class="marker-title">MI-CT</span>
+                <span class="marker-title">Volo ritorno</span>
             </div>
-            <div class="card marker-card" id="btn-lock" data-type="lock">
+            <div class="card marker-card" data-type="lock">
                 <span class="marker-icon">🔒</span>
                 <span class="marker-title">Blocca Date</span>
             </div>
-            <div class="card marker-card" id="btn-eraser" data-type="eraser">
+            <div class="card marker-card" data-type="eraser">
                 <span class="marker-icon">✖</span>
                 <span class="marker-title">Rimuovi</span>
             </div>
         </div>
 
-        <div class="calendar-container" id="calendar-container">
-            <!-- I mesi verranno generati dinamicamente via JS -->
+        <div class="calendar-container grid-view" id="calendar-container">
+            <!-- I mesi vengono generati via JS -->
         </div>
+
+        <section class="trips-panel" id="trips-panel">
+            <div class="trips-header">
+                <h2 class="trips-title">✈ Viaggi <span class="trips-summary" id="trips-summary"></span></h2>
+                <div class="route-config">
+                    <label for="route-home">Da</label>
+                    <input type="text" id="route-home" maxlength="3" size="3" autocomplete="off" spellcheck="false">
+                    <span class="route-arrow">↔</span>
+                    <label for="route-work">A</label>
+                    <input type="text" id="route-work" maxlength="3" size="3" autocomplete="off" spellcheck="false">
+                    <span class="route-hint">Codici IATA · MIL copre tutti gli scali di Milano</span>
+                </div>
+            </div>
+            <div class="trips-list" id="trips-list"></div>
+        </section>
     </div>
-    
-    <!-- Modal Inserimento Ore Permesso -->
+
+    <!-- Modale ore di permesso -->
     <div id="permesso-modal" class="modal-backdrop" style="display:none;">
         <div class="modal-content">
             <h3>Inserisci Ore di Permesso</h3>
@@ -110,6 +158,6 @@
 
     <div id="toast" class="toast"></div>
 
-    <script src="script.js"></script>
+    <script type="module" src="/src/main.js"></script>
 </body>
 </html>

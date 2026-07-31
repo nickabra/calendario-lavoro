@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recupera i dati del Calendario</title>
+<style>
+    body {
+        font-family: system-ui, sans-serif;
+        background: #0f172a;
+        color: #f8fafc;
+        min-height: 100vh;
+        margin: 0;
+        padding: 2rem 1rem;
+        display: flex;
+        justify-content: center;
+    }
+    .box { max-width: 620px; width: 100%; }
+    h1 { font-size: 1.5rem; margin-bottom: 0.5rem; }
+    p { color: #94a3b8; line-height: 1.6; }
+    .found, .empty {
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+        margin: 1.5rem 0;
+        border: 1px solid #334155;
+        background: #1e293b;
+    }
+    .found { border-left: 4px solid #15803d; }
+    .empty { border-left: 4px solid #f59e0b; }
+    ul { margin: 0.5rem 0 0; padding-left: 1.2rem; color: #cbd5e1; }
+    li { margin: 0.2rem 0; }
+    button {
+        background: #2563eb;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 0.7rem 1.4rem;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    button:hover { background: #1d4ed8; }
+    button:disabled { background: #475569; cursor: not-allowed; }
+    code {
+        background: #0f172a;
+        border: 1px solid #334155;
+        border-radius: 4px;
+        padding: 0.1rem 0.35rem;
+        font-size: 0.9em;
+    }
+</style>
+</head>
+<body>
+<div class="box">
+    <h1>Recupera i dati del Calendario</h1>
+    <p>
+        Apri questa pagina <strong>nello stesso modo in cui aprivi il vecchio calendario</strong>
+        (doppio clic sul file). Legge i dati salvati dal browser e li scarica in un file,
+        che poi carichi nella nuova app con il pulsante <strong>📂 Importa</strong>.
+    </p>
+
+    <div id="result"></div>
+
+    <button id="download" disabled>💾 Scarica il file di backup</button>
+</div>
+
+<script>
+    var KEYS = {
+        assignments: 'calendar_assignments',
+        overlays: 'calendar_overlays',
+        maxCounts: 'calendar_max_counts',
+        permessoHours: 'calendar_permesso_hours',
+        lockedDates: 'calendar_locked_dates',
+        route: 'calendar_route'
+    };
+
+    function readJSON(key) {
+        try {
+            var raw = localStorage.getItem(key);
+            var parsed = raw ? JSON.parse(raw) : null;
+            return parsed && typeof parsed === 'object' ? parsed : {};
+        } catch (err) {
+            return {};
+        }
+    }
+
+    var payload = {
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        year: 2026,
+        assignments: readJSON(KEYS.assignments),
+        overlays: readJSON(KEYS.overlays),
+        permessoHours: readJSON(KEYS.permessoHours),
+        lockedDates: readJSON(KEYS.lockedDates),
+        maxCounts: readJSON(KEYS.maxCounts),
+        route: readJSON(KEYS.route)
+    };
+
+    var counts = {
+        'giorni assegnati': Object.keys(payload.assignments).length,
+        'voli segnati': Object.keys(payload.overlays).length,
+        'date bloccate': Object.keys(payload.lockedDates).length
+    };
+    var total = counts['giorni assegnati'] + counts['voli segnati'] + counts['date bloccate'];
+    var result = document.getElementById('result');
+    var button = document.getElementById('download');
+
+    if (total > 0) {
+        var items = '';
+        for (var label in counts) {
+            items += '<li>' + counts[label] + ' ' + label + '</li>';
+        }
+        result.innerHTML =
+            '<div class="found"><strong>Dati trovati.</strong><ul>' + items + '</ul></div>';
+        button.disabled = false;
+    } else {
+        result.innerHTML =
+            '<div class="empty"><strong>Nessun dato trovato qui.</strong>' +
+            '<p>Vuol dire che il browser tiene i dati sotto un\'altra origine. ' +
+            'Apri il vecchio calendario, premi <code>F12</code>, vai su <em>Console</em> e incolla:</p>' +
+            '<p><code>copy(JSON.stringify({version:1,assignments:JSON.parse(localStorage.calendar_assignments||"{}"),' +
+            'overlays:JSON.parse(localStorage.calendar_overlays||"{}"),permessoHours:JSON.parse(localStorage.calendar_permesso_hours||"{}"),' +
+            'lockedDates:JSON.parse(localStorage.calendar_locked_dates||"{}"),maxCounts:JSON.parse(localStorage.calendar_max_counts||"{}")}))</code></p>' +
+            '<p>Il risultato finisce negli appunti: incollalo in un file <code>.json</code> e importalo.</p></div>';
+    }
+
+    button.addEventListener('click', function () {
+        var blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        var url = URL.createObjectURL(blob);
+        var link = document.createElement('a');
+        link.href = url;
+        link.download = 'calendario-2026-recuperato.json';
+        link.click();
+        URL.revokeObjectURL(url);
+    });
+</script>
+</body>
+</html>
