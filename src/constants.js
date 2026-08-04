@@ -17,12 +17,10 @@ export const MONTHS_INFO = [7, 8, 9, 10, 11].map(num => ({
     days: new Date(YEAR, num + 1, 0).getDate()
 }));
 
-// Festività che cadono nell'intervallo coperto. Il 7/12 è Sant'Ambrogio,
-// patrono di Milano: l'unico patrono che qui cade in giorno feriale.
+// Festività che cadono nell'intervallo coperto.
 export const HOLIDAYS = {
     '2026-08-15': 'Ferragosto',
     '2026-11-01': 'Ognissanti',
-    '2026-12-07': "Sant'Ambrogio",
     '2026-12-08': 'Immacolata',
     '2026-12-25': 'Natale',
     '2026-12-26': 'Santo Stefano'
