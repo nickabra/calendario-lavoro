@@ -181,10 +181,41 @@ function loadActivePage() {
     recalcCounts();
 }
 
+const RETUNED_KEY = 'calendar_defaults_retuned';
+
+// Massimali cambiati rispetto alle versioni precedenti dell'app.
+const PREVIOUS_DEFAULTS = { smartworking: 45, permesso: 14 };
+
+/**
+ * Porta ai nuovi massimali i calendari già salvati. Tocca solo chi aveva ancora
+ * il vecchio valore di default: un totale scelto a mano resta come sta.
+ */
+function retuneDefaults() {
+    if (localStorage.getItem(RETUNED_KEY)) return;
+
+    for (const page of pages.list) {
+        const key = pageKey(KEYS.maxCounts, page.id);
+        const saved = readJSON(key);
+        if (!saved) continue;
+
+        let changed = false;
+        for (const [type, previous] of Object.entries(PREVIOUS_DEFAULTS)) {
+            if (saved[type] === previous) {
+                saved[type] = DEFAULT_MAX_COUNTS[type];
+                changed = true;
+            }
+        }
+        if (changed) localStorage.setItem(key, JSON.stringify(saved));
+    }
+
+    localStorage.setItem(RETUNED_KEY, '1');
+}
+
 export function loadState() {
     initWorkingDays();
     snapshotLegacyState();
     loadPages();
+    retuneDefaults();
     loadActivePage();
 
     localStorage.removeItem('calendar_global_locked');

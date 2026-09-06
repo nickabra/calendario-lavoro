@@ -86,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
         renderTripsPanel();
     });
     initMealsPanel(renderMealsPanel);
-    initBackup(rebuildAll);
+    initBackup(reloadFromStorage);
     initSync(reloadFromStorage);
     initKeyboard();
     initGlobalPointerHandlers();

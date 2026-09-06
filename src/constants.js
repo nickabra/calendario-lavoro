@@ -40,8 +40,8 @@ export const MARKER_LABELS = {
 export const DEFAULT_MAX_COUNTS = {
     ferie: 10,
     missione: 15,
-    smartworking: 45,
-    permesso: 14,
+    smartworking: 40,
+    permesso: 11,
     exfest: 1
 };
 

@@ -275,6 +275,29 @@ kbd {
     opacity: 0.7;
 }
 
+/* Tutta la targhetta apre la modifica: il bersaglio deve reggere il dito. */
+.editable-badge {
+    cursor: pointer;
+    padding: 0.3rem 0.55rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.editable-badge:hover,
+.editable-badge:focus-visible {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.editable-badge:focus-visible {
+    outline: 2px solid #60a5fa;
+    outline-offset: 2px;
+}
+
+.editable-badge.editing {
+    background: rgba(96, 165, 250, 0.18);
+}
+
 .edit-icon:hover {
     opacity: 1;
 }

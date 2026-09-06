@@ -76,7 +76,22 @@ Il piano Spark di Firebase è gratuito e senza scadenza: 50.000 letture e 20.000
 scritture al giorno, contro le poche decine che serve a un uso personale.
 Nessuna carta di credito, nessuna sospensione per inattività.
 
+## Portare sul sito i calendari già esistenti
+
+`localStorage` è legato all'indirizzo esatto da cui si apre la pagina: i dati
+del file aperto dal disco (`file:///.../dist/index.html`) e quelli del sito
+pubblicato vivono in archivi separati, e il browser non li fa comunicare. Per
+travasarli una volta sola:
+
+1. Apri il calendario dal disco, come hai sempre fatto, e premi **💾 Backup**.
+   Il file scaricato contiene *tutti* i calendari, non solo quello aperto.
+2. Apri il sito pubblicato, premi **📂 Importa** e scegli quel file.
+3. Fai il login con **☁️ Accedi**: da lì in poi i dati vivono nel cloud e ogni
+   altro dispositivo li riceve al primo accesso.
+
 ## Rete di sicurezza
 
-I pulsanti **💾 Backup** e **📂 Importa** esportano e rileggono un file JSON.
-Restano utili: sono l'unica copia che non dipende né dal browser né da Firebase.
+I pulsanti **💾 Backup** e **📂 Importa** esportano e rileggono in un file JSON
+l'insieme dei calendari. Restano utili: sono l'unica copia che non dipende né
+dal browser né da Firebase. I backup del formato precedente, che contenevano un
+solo calendario, si importano ancora.

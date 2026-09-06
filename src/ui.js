@@ -1,4 +1,4 @@
-import { BASE_MARKERS, MONTH_NAMES } from './constants.js';
+import { BASE_MARKERS, MARKER_LABELS, MONTH_NAMES } from './constants.js';
 import { pages, recalcCounts, state, usedCount } from './state.js';
 
 let toastTimer = null;
@@ -36,14 +36,29 @@ function formatAmount(value) {
 export function initEditableTotals(onChange) {
     document.querySelectorAll('.editable-total[data-total]').forEach(el => {
         const type = el.getAttribute('data-total');
-        // stopPropagation: la matita vive dentro la card dello strumento,
+        // Il bersaglio è tutta la targhetta, non le poche cifre del totale:
+        // sul telefono un numero di due caratteri è quasi impossibile da centrare.
+        const target = el.closest('.marker-badge') || el;
+        target.classList.add('editable-badge');
+        target.tabIndex = 0;
+        target.setAttribute('role', 'button');
+        target.setAttribute('aria-label', `Modifica il totale di ${MARKER_LABELS[type] || type}`);
+
+        // stopPropagation: la targhetta vive dentro la card dello strumento,
         // e senza questo un clic per modificare il totale lo selezionerebbe.
         const start = (event) => {
             event.stopPropagation();
             startEditingTotal(el, type, onChange);
         };
-        el.addEventListener('click', start);
-        document.querySelector(`[data-edit="${type}"]`)?.addEventListener('click', start);
+        target.addEventListener('click', start);
+        target.addEventListener('keydown', (event) => {
+            // L'Invio dato dentro il campo risale fin qui: senza questo
+            // controllo chiuderebbe la modifica e la riaprirebbe subito.
+            if (event.target !== target) return;
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            event.preventDefault();
+            start(event);
+        });
     });
 }
 
@@ -54,10 +69,16 @@ function startEditingTotal(el, type, onChange) {
     const input = document.createElement('input');
     input.type = 'number';
     input.min = '0';
-    input.step = type === 'permesso' ? '0.5' : '1';
+    const decimals = type === 'permesso';
+    input.step = decimals ? '0.5' : '1';
+    // Sul telefono decide quale tastierino compare e cosa dice il tasto di invio.
+    input.inputMode = decimals ? 'decimal' : 'numeric';
+    input.enterKeyHint = 'done';
     input.value = previous;
     input.className = 'edit-total-input';
 
+    const badge = el.closest('.marker-badge');
+    badge?.classList.add('editing');
     el.replaceChildren(input);
     input.focus();
     input.select();
@@ -70,18 +91,20 @@ function startEditingTotal(el, type, onChange) {
         let value = parseFloat(input.value);
         if (!Number.isFinite(value) || value < 0) value = previous;
 
-        // Abbassare il totale sotto quanto è già assegnato produrrebbe un
-        // residuo negativo: meglio rifiutare e dire perché.
+        // Un totale sotto quanto è già assegnato darebbe un residuo negativo.
+        // Si ferma al minimo possibile invece di buttare via quanto digitato:
+        // ritrovarsi il vecchio numero senza spiegazioni è peggio.
         const used = usedCount(type);
         if (value < used) {
             const unit = type === 'permesso' ? 'h' : '';
-            showToast(
-                `Non puoi scendere sotto ${used}${unit}: è quanto hai già assegnato. Libera prima qualche giorno.`,
-                'error'
-            );
-            value = previous;
+            showToast(`Totale fermato a ${used}${unit}: è quanto hai già assegnato.`, 'info');
+            value = used;
         }
 
+        badge?.classList.remove('editing');
+        // Il campo va tolto prima di ridisegnare: updateCountsUI salta i totali
+        // che contengono un input, e senza questo il numero non tornerebbe più.
+        input.remove();
         state.maxCounts[type] = value;
         recalcCounts();
         onChange();
