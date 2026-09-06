@@ -18,6 +18,16 @@ const KEYS = {
     mealVouchers: 'calendar_meal_vouchers'
 };
 
+/**
+ * Richiamata dopo ogni salvataggio. La imposta il modulo di sincronizzazione;
+ * senza di esso lo stato resta puramente locale, come prima.
+ */
+let onStateSaved = null;
+
+export function setSaveHook(fn) {
+    onStateSaved = fn;
+}
+
 const SNAPSHOT_KEY = 'calendar_snapshot_v0';
 const PAGES_KEY = 'calendar_pages';
 const ACTIVE_PAGE_KEY = 'calendar_active_page';
@@ -156,6 +166,7 @@ export function saveState() {
     localStorage.setItem(storageKey(KEYS.lockedDates), JSON.stringify(state.lockedDates));
     localStorage.setItem(storageKey(KEYS.route), JSON.stringify(state.route));
     localStorage.setItem(storageKey(KEYS.mealVouchers), JSON.stringify(state.mealVouchers));
+    onStateSaved?.();
 }
 
 /** Carica i dati della pagina attiva, ripartendo sempre dai valori di default. */
@@ -195,6 +206,7 @@ function loadPages() {
 function savePages() {
     localStorage.setItem(PAGES_KEY, JSON.stringify(pages.list));
     localStorage.setItem(ACTIVE_PAGE_KEY, pages.activeId);
+    onStateSaved?.();
 }
 
 /** Salva la pagina corrente e carica quella richiesta. */

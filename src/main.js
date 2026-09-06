@@ -26,9 +26,11 @@ import {
     recalcCounts,
     renamePage,
     saveState,
+    setSaveHook,
     state,
     switchPage
 } from './state.js';
+import { initSync, markLocalChange } from './sync.js';
 import {
     closeFlightPopover,
     initTripsPanel,
@@ -64,6 +66,7 @@ let dragStart = null;
 let dragEnd = null;
 
 document.addEventListener('DOMContentLoaded', () => {
+    setSaveHook(markLocalChange);
     loadState();
 
     renderCalendar(document.getElementById('calendar-container'), {
@@ -84,6 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     initMealsPanel(renderMealsPanel);
     initBackup(rebuildAll);
+    initSync(reloadFromStorage);
     initKeyboard();
     initGlobalPointerHandlers();
 
@@ -105,6 +109,12 @@ function rebuildAll() {
     syncMealInputs();
     renderMealsPanel();
     renderPagesBar();
+}
+
+/** Rilegge da localStorage dopo che la sincronizzazione ha sostituito i dati. */
+function reloadFromStorage() {
+    loadState();
+    rebuildAll();
 }
 
 // --- Pagine di calendario ----------------------------------------------
