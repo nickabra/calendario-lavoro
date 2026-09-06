@@ -10,8 +10,8 @@
  * e l'app funziona esattamente come prima, solo in locale.
  */
 export const firebaseConfig = {
-    apiKey: 'INCOLLA_QUI_LA_TUA_API_KEY',
-    authDomain: 'PROGETTO.firebaseapp.com',
-    projectId: 'PROGETTO',
-    appId: 'INCOLLA_QUI_IL_TUO_APP_ID'
+    apiKey: 'AIzaSyBUowV1JEGpPqCCq-YbC5dKIGi1E-YLmwA',
+    authDomain: 'calendario-lavoro-513df.firebaseapp.com',
+    projectId: 'calendario-lavoro-513df',
+    appId: '1:981550725101:web:c9b4347eecc24f741099e4'
 };
