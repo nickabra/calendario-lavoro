@@ -1,5 +1,10 @@
-import { applyImportedState, resetState, serializeState } from './state.js';
+import { activePage, applyImportedState, resetState, serializeState } from './state.js';
 import { showToast } from './ui.js';
+
+/** Nome file leggibile: senza questo i backup di pagine diverse si sovrascrivono. */
+function slug(name) {
+    return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'calendario';
+}
 
 function todayStamp() {
     return new Date().toISOString().slice(0, 10);
@@ -21,7 +26,7 @@ function downloadJSON(payload, filename) {
  */
 export function initBackup(onStateReplaced) {
     document.getElementById('btn-export-json')?.addEventListener('click', () => {
-        downloadJSON(serializeState(), `calendario-2026-backup-${todayStamp()}.json`);
+        downloadJSON(serializeState(), `${slug(activePage().name)}-backup-${todayStamp()}.json`);
         showToast('Backup scaricato. Tienilo fuori dal browser.', 'success');
     });
 

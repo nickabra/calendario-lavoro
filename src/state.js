@@ -1,5 +1,6 @@
 import {
     DEFAULT_MAX_COUNTS,
+    DEFAULT_MEAL_VOUCHERS,
     DEFAULT_ROUTE,
     HOLIDAYS,
     MONTHS_INFO,
@@ -13,10 +14,35 @@ const KEYS = {
     maxCounts: 'calendar_max_counts',
     permessoHours: 'calendar_permesso_hours',
     lockedDates: 'calendar_locked_dates',
-    route: 'calendar_route'
+    route: 'calendar_route',
+    mealVouchers: 'calendar_meal_vouchers'
 };
 
 const SNAPSHOT_KEY = 'calendar_snapshot_v0';
+const PAGES_KEY = 'calendar_pages';
+const ACTIVE_PAGE_KEY = 'calendar_active_page';
+
+/**
+ * Pagine di calendario indipendenti. La prima ha id '' e usa le chiavi
+ * storiche senza suffisso, così i dati salvati prima di questa versione
+ * restano dove sono senza bisogno di migrazioni.
+ */
+export const pages = {
+    list: [{ id: '', name: 'Calendario 1' }],
+    activeId: ''
+};
+
+function pageKey(base, pageId) {
+    return pageId ? `${base}:${pageId}` : base;
+}
+
+function storageKey(base) {
+    return pageKey(base, pages.activeId);
+}
+
+export function activePage() {
+    return pages.list.find(page => page.id === pages.activeId) || pages.list[0];
+}
 
 export const state = {
     /** "YYYY-MM-DD" -> uno dei BASE_MARKERS */
@@ -30,6 +56,8 @@ export const state = {
     maxCounts: { ...DEFAULT_MAX_COUNTS },
     currentCounts: { ...DEFAULT_MAX_COUNTS },
     route: { ...DEFAULT_ROUTE },
+    /** Buoni pasto: dotazione iniziale, media di giorni doppi e cosa matura */
+    mealVouchers: { ...DEFAULT_MEAL_VOUCHERS },
     /** Giorni feriali dell'intervallo, ordinati: base per la regola dei consecutivi */
     workingDays: []
 };
@@ -121,27 +149,114 @@ function snapshotLegacyState() {
 }
 
 export function saveState() {
-    localStorage.setItem(KEYS.assignments, JSON.stringify(state.assignments));
-    localStorage.setItem(KEYS.overlays, JSON.stringify(state.overlays));
-    localStorage.setItem(KEYS.maxCounts, JSON.stringify(state.maxCounts));
-    localStorage.setItem(KEYS.permessoHours, JSON.stringify(state.permessoHours));
-    localStorage.setItem(KEYS.lockedDates, JSON.stringify(state.lockedDates));
-    localStorage.setItem(KEYS.route, JSON.stringify(state.route));
+    localStorage.setItem(storageKey(KEYS.assignments), JSON.stringify(state.assignments));
+    localStorage.setItem(storageKey(KEYS.overlays), JSON.stringify(state.overlays));
+    localStorage.setItem(storageKey(KEYS.maxCounts), JSON.stringify(state.maxCounts));
+    localStorage.setItem(storageKey(KEYS.permessoHours), JSON.stringify(state.permessoHours));
+    localStorage.setItem(storageKey(KEYS.lockedDates), JSON.stringify(state.lockedDates));
+    localStorage.setItem(storageKey(KEYS.route), JSON.stringify(state.route));
+    localStorage.setItem(storageKey(KEYS.mealVouchers), JSON.stringify(state.mealVouchers));
+}
+
+/** Carica i dati della pagina attiva, ripartendo sempre dai valori di default. */
+function loadActivePage() {
+    state.assignments = readJSON(storageKey(KEYS.assignments)) || {};
+    state.overlays = readJSON(storageKey(KEYS.overlays)) || {};
+    state.permessoHours = readJSON(storageKey(KEYS.permessoHours)) || {};
+    state.lockedDates = readJSON(storageKey(KEYS.lockedDates)) || {};
+    state.maxCounts = { ...DEFAULT_MAX_COUNTS, ...(readJSON(storageKey(KEYS.maxCounts)) || {}) };
+    state.route = { ...DEFAULT_ROUTE, ...(readJSON(storageKey(KEYS.route)) || {}) };
+    state.mealVouchers = { ...DEFAULT_MEAL_VOUCHERS, ...(readJSON(storageKey(KEYS.mealVouchers)) || {}) };
+    recalcCounts();
 }
 
 export function loadState() {
     initWorkingDays();
     snapshotLegacyState();
-
-    Object.assign(state.maxCounts, readJSON(KEYS.maxCounts) || {});
-    state.assignments = readJSON(KEYS.assignments) || {};
-    state.overlays = readJSON(KEYS.overlays) || {};
-    state.permessoHours = readJSON(KEYS.permessoHours) || {};
-    state.lockedDates = readJSON(KEYS.lockedDates) || {};
-    Object.assign(state.route, readJSON(KEYS.route) || {});
+    loadPages();
+    loadActivePage();
 
     localStorage.removeItem('calendar_global_locked');
-    recalcCounts();
+}
+
+// --- Pagine ------------------------------------------------------------
+
+function loadPages() {
+    const saved = readJSON(PAGES_KEY);
+    const list = Array.isArray(saved)
+        ? saved.filter(page => page && typeof page.id === 'string' && typeof page.name === 'string')
+        : [];
+    if (list.length) pages.list = list;
+
+    const active = localStorage.getItem(ACTIVE_PAGE_KEY) || '';
+    pages.activeId = pages.list.some(page => page.id === active) ? active : pages.list[0].id;
+}
+
+function savePages() {
+    localStorage.setItem(PAGES_KEY, JSON.stringify(pages.list));
+    localStorage.setItem(ACTIVE_PAGE_KEY, pages.activeId);
+}
+
+/** Salva la pagina corrente e carica quella richiesta. */
+export function switchPage(id) {
+    if (id === pages.activeId || !pages.list.some(page => page.id === id)) return;
+    saveState();
+    pages.activeId = id;
+    savePages();
+    loadActivePage();
+}
+
+/** `sourceId` copia i dati di una pagina esistente; null crea una pagina vuota. */
+export function addPage(name, sourceId = null) {
+    saveState();
+    // Due pagine con lo stesso id condividerebbero i dati: l'id va reso unico
+    // anche quando due creazioni cadono nello stesso millisecondo.
+    let id = `p${Date.now().toString(36)}`;
+    while (pages.list.some(page => page.id === id)) id += 'x';
+    const page = { id, name: name || `Calendario ${pages.list.length + 1}` };
+
+    if (sourceId !== null && pages.list.some(item => item.id === sourceId)) {
+        // Copia le stringhe grezze: nessun dato resta condiviso fra le due pagine.
+        for (const base of Object.values(KEYS)) {
+            const raw = localStorage.getItem(pageKey(base, sourceId));
+            if (raw === null) localStorage.removeItem(pageKey(base, page.id));
+            else localStorage.setItem(pageKey(base, page.id), raw);
+        }
+    }
+
+    pages.list.push(page);
+    pages.activeId = page.id;
+    savePages();
+    loadActivePage();
+    saveState();
+    return page;
+}
+
+export function renamePage(id, name) {
+    const page = pages.list.find(item => item.id === id);
+    if (!page || !name) return;
+    page.name = name;
+    savePages();
+}
+
+/** Elimina la pagina e i suoi dati. L'ultima pagina rimasta non si elimina. */
+export function deletePage(id) {
+    if (pages.list.length < 2) return false;
+    const index = pages.list.findIndex(page => page.id === id);
+    if (index === -1) return false;
+
+    saveState();
+    const previousActive = pages.activeId;
+    pages.activeId = id;
+    for (const key of Object.values(KEYS)) localStorage.removeItem(storageKey(key));
+
+    pages.list.splice(index, 1);
+    pages.activeId = previousActive === id
+        ? pages.list[Math.min(index, pages.list.length - 1)].id
+        : previousActive;
+    savePages();
+    loadActivePage();
+    return true;
 }
 
 /** Quanto è già stato consumato di un segnagiorno (ore per il permesso, giorni per gli altri). */
@@ -170,7 +285,8 @@ export function serializeState() {
         permessoHours: state.permessoHours,
         lockedDates: state.lockedDates,
         maxCounts: state.maxCounts,
-        route: state.route
+        route: state.route,
+        mealVouchers: state.mealVouchers
     };
 }
 
@@ -199,6 +315,7 @@ export function applyImportedState(payload) {
     state.lockedDates = plainObject(payload.lockedDates);
     state.maxCounts = { ...DEFAULT_MAX_COUNTS, ...plainObject(payload.maxCounts) };
     state.route = { ...DEFAULT_ROUTE, ...plainObject(payload.route) };
+    state.mealVouchers = { ...DEFAULT_MEAL_VOUCHERS, ...plainObject(payload.mealVouchers) };
 
     recalcCounts();
     saveState();
@@ -211,6 +328,7 @@ export function resetState() {
     state.lockedDates = {};
     state.maxCounts = { ...DEFAULT_MAX_COUNTS };
     state.route = { ...DEFAULT_ROUTE };
+    state.mealVouchers = { ...DEFAULT_MEAL_VOUCHERS };
     recalcCounts();
     saveState();
 }

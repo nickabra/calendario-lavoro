@@ -45,6 +45,18 @@ export const DEFAULT_MAX_COUNTS = {
     exfest: 1
 };
 
+// Buoni pasto: il conteggio parte da settembre (indice 8), i mesi prima
+// restano nel calendario ma fuori dal calcolo.
+export const MEAL_START_MONTH = 8;
+
+export const DEFAULT_MEAL_VOUCHERS = {
+    initial: 35,
+    doublePerMonth: 1.5,
+    value: 7,
+    missione: false,
+    smartworking: false
+};
+
 // Vincoli contrattuali
 export const MONTHLY_LIMITS = {
     missione: 5,

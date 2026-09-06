@@ -101,6 +101,56 @@ body {
     border-color: #b91c1c;
 }
 
+.pages-bar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+}
+
+.page-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    background: #1e293b;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    padding: 0.4rem 0.8rem;
+    border-radius: 999px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.85rem;
+    font-family: inherit;
+    transition: var(--transition);
+}
+
+.page-tab:hover {
+    background: #334155;
+    color: var(--text-primary);
+}
+
+.page-tab.active {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: #fff;
+}
+
+.page-tab .page-close {
+    opacity: 0.7;
+    font-size: 0.8rem;
+    line-height: 1;
+}
+
+.page-tab .page-close:hover {
+    opacity: 1;
+}
+
+.page-tab.add {
+    border-style: dashed;
+}
+
 .shortcuts-hint {
     margin-top: 0.9rem;
     font-size: 0.78rem;
@@ -620,6 +670,80 @@ kbd {
 
 /* --- Modale ----------------------------------------------------------- */
 
+/* --- Buoni pasto ------------------------------------------------------ */
+
+.meals-config {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+}
+
+.meals-config input[type="number"] {
+    width: 68px;
+    background: #0f172a;
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    border-radius: 6px;
+    padding: 0.3rem 0.4rem;
+    font-family: inherit;
+    font-size: 0.85rem;
+}
+
+.meals-config input[type="number"]:focus {
+    outline: none;
+    border-color: #6366f1;
+}
+
+.meals-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    cursor: pointer;
+}
+
+.meals-grid {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.meals-grid th,
+.meals-grid td {
+    padding: 0.45rem 0.6rem;
+    text-align: right;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.meals-grid th:first-child,
+.meals-grid td:first-child {
+    text-align: left;
+}
+
+.meals-grid th {
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 0.8rem;
+}
+
+.meals-grid tr:last-child td {
+    border-bottom: none;
+    font-weight: 700;
+    color: #f8fafc;
+}
+
+.meals-grid td:last-child {
+    font-weight: 600;
+}
+
+.meals-hint {
+    margin-top: 0.75rem;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+}
+
 .modal-backdrop {
     position: fixed;
     top: 0;
@@ -727,6 +851,44 @@ kbd {
     border-color: #6366f1;
 }
 
+.page-field {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+    text-align: left;
+}
+
+.page-field label {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    flex-shrink: 0;
+}
+
+.page-field input,
+.page-field select {
+    flex: 1;
+    min-width: 0;
+    background: #0f172a;
+    border: 1px solid #334155;
+    color: white;
+    border-radius: 6px;
+    padding: 0.45rem 0.6rem;
+    font-family: inherit;
+    font-size: 0.9rem;
+}
+
+.page-field input:focus,
+.page-field select:focus {
+    outline: none;
+    border-color: #6366f1;
+}
+
+.page-field + .modal-actions {
+    margin-top: 1.5rem;
+}
+
 .modal-actions {
     display: flex;
     justify-content: flex-end;
@@ -819,6 +981,7 @@ kbd {
     }
 
     .header-actions,
+    .pages-bar,
     .shortcuts-hint,
     .dashboard,
     .trips-panel,

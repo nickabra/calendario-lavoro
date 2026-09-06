@@ -9,18 +9,25 @@ import {
     setRangePreview,
     updateDayUI
 } from './calendar.js';
-import { MARKER_LABELS, OVERLAY_MARKERS } from './constants.js';
+import { MARKER_LABELS, OVERLAY_MARKERS, YEAR } from './constants.js';
+import { initMealsPanel, renderMealsPanel, syncMealInputs } from './meals.js';
 import { validateAssignment } from './rules.js';
 import {
+    activePage,
+    addPage,
     dateRange,
+    deletePage,
     formatDateItalian,
     isHoliday,
     isLocked,
     isWeekend,
     loadState,
+    pages,
     recalcCounts,
+    renamePage,
     saveState,
-    state
+    state,
+    switchPage
 } from './state.js';
 import {
     closeFlightPopover,
@@ -30,8 +37,10 @@ import {
     syncRouteInputs
 } from './tripsPanel.js';
 import {
+    askNewPage,
     askPermessoHours,
     initEditableTotals,
+    initNewPageModal,
     initPermessoModal,
     showToast,
     updateCountsUI
@@ -64,6 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initMarkerCards();
     initPermessoModal();
+    initNewPageModal();
     initEditableTotals(() => {
         saveState();
         updateCountsUI();
@@ -72,6 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
         refreshAllDays();
         renderTripsPanel();
     });
+    initMealsPanel(renderMealsPanel);
     initBackup(rebuildAll);
     initKeyboard();
     initGlobalPointerHandlers();
@@ -80,6 +91,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     updateCountsUI();
     renderTripsPanel();
+    renderMealsPanel();
+    renderPagesBar();
     updateContainerClass();
 });
 
@@ -89,6 +102,96 @@ function rebuildAll() {
     updateCountsUI();
     renderTripsPanel();
     syncRouteInputs();
+    syncMealInputs();
+    renderMealsPanel();
+    renderPagesBar();
+}
+
+// --- Pagine di calendario ----------------------------------------------
+
+function renderPagesBar() {
+    const bar = document.getElementById('pages-bar');
+    if (!bar) return;
+
+    bar.replaceChildren();
+    for (const page of pages.list) {
+        bar.appendChild(pageTab(page));
+    }
+    bar.appendChild(newPageButton());
+
+    // Il PDF stampato deve dire di quale calendario è.
+    const printTitle = document.querySelector('.print-summary h2');
+    if (printTitle) printTitle.innerText = `Riepilogo ${activePage().name} · ${YEAR}`;
+}
+
+function pageTab(page) {
+    const tab = document.createElement('button');
+    tab.type = 'button';
+    tab.className = `page-tab${page.id === pages.activeId ? ' active' : ''}`;
+    tab.title = 'Doppio clic per rinominare';
+
+    const label = document.createElement('span');
+    label.innerText = page.name;
+    tab.appendChild(label);
+
+    tab.addEventListener('click', () => {
+        switchPage(page.id);
+        rebuildAll();
+    });
+
+    tab.addEventListener('dblclick', () => {
+        const name = window.prompt('Nome del calendario', page.name)?.trim();
+        if (!name) return;
+        renamePage(page.id, name);
+        renderPagesBar();
+    });
+
+    // La chiusura sta solo sulla scheda attiva: si elimina quello che si sta guardando.
+    if (page.id === pages.activeId && pages.list.length > 1) {
+        const close = document.createElement('span');
+        close.className = 'page-close';
+        close.innerText = '✕';
+        close.title = 'Elimina questo calendario';
+        close.addEventListener('click', (event) => {
+            event.stopPropagation();
+            const confirmed = window.confirm(
+                `Eliminare "${page.name}" con tutte le sue assegnazioni?
+
+` +
+                'Non è reversibile. Se non hai un backup, annulla ed esportalo prima.'
+            );
+            if (!confirmed) return;
+            deletePage(page.id);
+            rebuildAll();
+            showToast('Calendario eliminato.', 'info');
+        });
+        tab.appendChild(close);
+    }
+
+    return tab;
+}
+
+function newPageButton() {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'page-tab add';
+    button.innerText = '+ Nuovo';
+    button.title = 'Crea un calendario vuoto, indipendente da questo';
+
+    button.addEventListener('click', async () => {
+        const answer = await askNewPage(`Calendario ${pages.list.length + 1}`);
+        if (!answer) return;
+
+        const source = pages.list.find(page => page.id === answer.sourceId);
+        addPage(answer.name, answer.sourceId);
+        rebuildAll();
+        showToast(
+            source ? `"${answer.name}" creato come copia di "${source.name}".` : 'Nuovo calendario vuoto creato.',
+            'success'
+        );
+    });
+
+    return button;
 }
 
 /** Salva e riallinea le celle toccate più i contatori e il pannello viaggi. */
@@ -101,6 +204,7 @@ function commit(dates) {
     }
     updateCountsUI();
     renderTripsPanel();
+    renderMealsPanel();
 }
 
 // --- Selezione dello strumento -----------------------------------------
@@ -142,9 +246,11 @@ function initKeyboard() {
         const tag = event.target?.tagName;
         if (tag === 'INPUT' || tag === 'TEXTAREA') return;
 
-        // Con la modale aperta i tasti sono suoi: Esc deve solo chiuderla,
+        // Con una modale aperta i tasti sono suoi: Esc deve solo chiuderla,
         // non deselezionare anche lo strumento.
-        if (document.getElementById('permesso-modal')?.style.display === 'flex') return;
+        const modalOpen = [...document.querySelectorAll('.modal-backdrop')]
+            .some(modal => modal.style.display === 'flex');
+        if (modalOpen) return;
 
         if (event.key === 'Escape') {
             selectMarker(null);

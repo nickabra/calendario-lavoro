@@ -13,6 +13,7 @@
         <header class="header">
             <h1>Gestione Calendario 2026</h1>
             <p>Seleziona un segnagiorno e clicca sulle date. Trascina per assegnare più giorni in una volta.</p>
+            <nav class="pages-bar" id="pages-bar" aria-label="Calendari"></nav>
             <div class="header-actions">
                 <button id="btn-export-pdf" class="action-btn primary">📄 Esporta PDF</button>
                 <button id="btn-export-json" class="action-btn">💾 Backup</button>
@@ -109,6 +110,28 @@
             <!-- I mesi vengono generati via JS -->
         </div>
 
+        <section class="trips-panel meals-panel" id="meals-panel">
+            <div class="trips-header">
+                <h2 class="trips-title">🎫 Buoni pasto <span class="trips-summary" id="meals-summary"></span></h2>
+                <div class="meals-config">
+                    <label for="meals-initial">Iniziali</label>
+                    <input type="number" id="meals-initial" min="0" step="1">
+                    <label for="meals-double" title="Quante volte al mese, in media, ne spendi due invece di uno">Doppi/mese</label>
+                    <input type="number" id="meals-double" min="0" max="31" step="0.5">
+                    <label for="meals-value">Valore</label>
+                    <input type="number" id="meals-value" min="0" step="0.5">
+                    <span class="meals-unit">€</span>
+                    <label class="meals-toggle"><input type="checkbox" id="meals-missione"> Missione matura</label>
+                    <label class="meals-toggle"><input type="checkbox" id="meals-smartworking"> Smart matura</label>
+                </div>
+            </div>
+            <div class="meals-table" id="meals-table"></div>
+            <p class="meals-hint">
+                Conteggio da settembre. Si matura un buono nei giorni che contano come lavorati
+                e se ne spende uno per ogni giorno in ufficio. Un permesso sotto le 8h resta presenza.
+            </p>
+        </section>
+
         <section class="trips-panel" id="trips-panel">
             <div class="trips-header">
                 <h2 class="trips-title">✈ Viaggi <span class="trips-summary" id="trips-summary"></span></h2>
@@ -123,6 +146,29 @@
             </div>
             <div class="trips-list" id="trips-list"></div>
         </section>
+    </div>
+
+    <!-- Modale nuovo calendario -->
+    <div id="new-page-modal" class="modal-backdrop" style="display:none;">
+        <div class="modal-content">
+            <h3>Nuovo calendario</h3>
+            <p class="modal-subtitle">Parti da zero oppure duplica un calendario che hai già.</p>
+
+            <div class="page-field">
+                <label for="new-page-name">Nome</label>
+                <input type="text" id="new-page-name" maxlength="40" autocomplete="off" spellcheck="false">
+            </div>
+
+            <div class="page-field">
+                <label for="new-page-source">Contenuto</label>
+                <select id="new-page-source"></select>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" id="new-page-cancel" class="modal-btn cancel">Annulla</button>
+                <button type="button" id="new-page-confirm" class="modal-btn confirm">Crea</button>
+            </div>
+        </div>
     </div>
 
     <!-- Modale ore di permesso -->

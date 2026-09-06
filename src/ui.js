@@ -1,5 +1,5 @@
 import { BASE_MARKERS, MONTH_NAMES } from './constants.js';
-import { recalcCounts, state, usedCount } from './state.js';
+import { pages, recalcCounts, state, usedCount } from './state.js';
 
 let toastTimer = null;
 
@@ -95,6 +95,95 @@ function startEditingTotal(el, type, onChange) {
             input.value = previous;
             input.blur();
         }
+    });
+}
+
+// --- Modale nuovo calendario -------------------------------------------
+
+const EMPTY_SOURCE = 'vuoto';
+let resolveNewPage = null;
+
+/**
+ * Chiede nome e contenuto del nuovo calendario.
+ * Risolve con { name, sourceId } (sourceId null = calendario vuoto)
+ * oppure null se l'utente annulla.
+ */
+export function askNewPage(defaultName) {
+    const modal = document.getElementById('new-page-modal');
+    const nameInput = document.getElementById('new-page-name');
+    const select = document.getElementById('new-page-source');
+    if (!modal) return Promise.resolve(null);
+
+    nameInput.value = defaultName;
+
+    // L'id della prima pagina è '', quindi non può fare da valore "vuoto".
+    select.replaceChildren();
+    select.appendChild(option(EMPTY_SOURCE, 'Calendario vuoto'));
+    for (const page of pages.list) {
+        const label = page.id === pages.activeId ? `Copia di ${page.name} (attuale)` : `Copia di ${page.name}`;
+        select.appendChild(option(`copia:${page.id}`, label));
+    }
+    select.value = EMPTY_SOURCE;
+
+    modal.style.display = 'flex';
+    nameInput.focus();
+    nameInput.select();
+
+    return new Promise(resolve => { resolveNewPage = resolve; });
+}
+
+function option(value, label) {
+    const el = document.createElement('option');
+    el.value = value;
+    el.innerText = label;
+    return el;
+}
+
+function closeNewPageModal(result) {
+    const modal = document.getElementById('new-page-modal');
+    if (modal) modal.style.display = 'none';
+    const resolve = resolveNewPage;
+    resolveNewPage = null;
+    resolve?.(result);
+}
+
+export function initNewPageModal() {
+    const modal = document.getElementById('new-page-modal');
+    if (!modal) return;
+
+    const nameInput = document.getElementById('new-page-name');
+    const select = document.getElementById('new-page-source');
+
+    const confirm = () => {
+        const name = nameInput.value.trim();
+        if (!name) {
+            showToast('Dai un nome al calendario.');
+            nameInput.focus();
+            return;
+        }
+        const source = select.value;
+        closeNewPageModal({
+            name,
+            sourceId: source === EMPTY_SOURCE ? null : source.slice('copia:'.length)
+        });
+    };
+
+    document.getElementById('new-page-confirm').addEventListener('click', confirm);
+    document.getElementById('new-page-cancel').addEventListener('click', () => closeNewPageModal(null));
+
+    nameInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') confirm();
+    });
+
+    modal.addEventListener('pointerdown', (event) => {
+        if (event.target === modal) closeNewPageModal(null);
+    });
+    document.addEventListener('keydown', (event) => {
+        if (event.key !== 'Escape' || !resolveNewPage) return;
+        // Il tasto è consumato dalla modale: senza questo l'handler globale
+        // deselezionerebbe anche lo strumento attivo.
+        event.stopImmediatePropagation();
+        closeNewPageModal(null);
     });
 }
 
