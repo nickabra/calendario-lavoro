@@ -17,8 +17,9 @@ import { showToast } from './ui.js';
 const CDN = 'https://www.gstatic.com/firebasejs/11.6.0';
 const PREFIX = 'calendar_';
 // Chiavi locali che non vanno sincronizzate: due sono i marcatori temporali di
-// questo modulo, la terza è la copia di sicurezza pre-migrazione del dispositivo.
-const NOT_SYNCED = new Set(['calendar_snapshot_v0', 'calendar_local_at', 'calendar_sync_at']);
+// questo modulo, poi la copia di sicurezza pre-migrazione e l'anno mostrato,
+// che è una scelta di ciascun dispositivo.
+const NOT_SYNCED = new Set(['calendar_snapshot_v0', 'calendar_local_at', 'calendar_sync_at', 'calendar_view_year']);
 const LOCAL_AT = 'calendar_local_at';
 const SYNC_AT = 'calendar_sync_at';
 const PUSH_DELAY_MS = 1500;

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calendario Lavoro 2026</title>
+    <title>Calendario Lavoro</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -11,8 +11,9 @@
 <body>
     <div class="app-container">
         <header class="header">
-            <h1>Gestione Calendario 2026</h1>
+            <h1>Gestione Calendario</h1>
             <p>Seleziona un segnagiorno e clicca sulle date. Trascina per assegnare più giorni in una volta.</p>
+            <nav class="pages-bar" id="year-bar" aria-label="Anno"></nav>
             <nav class="pages-bar" id="pages-bar" aria-label="Calendari"></nav>
             <div class="header-actions">
                 <button id="btn-export-pdf" class="action-btn primary">📄 Esporta PDF</button>
@@ -29,7 +30,7 @@
         </header>
 
         <div class="print-summary" id="print-summary">
-            <h2>Riepilogo Assegnazioni 2026</h2>
+            <h2>Riepilogo Assegnazioni</h2>
             <div class="print-counters">
                 <div>Ferie rimanenti: <span data-count="ferie">10</span>/<span data-total="ferie">10</span></div>
                 <div>Missioni rimanenti: <span data-count="missione">15</span>/<span data-total="missione">15</span></div>
@@ -128,7 +129,7 @@
             </div>
             <div class="meals-table" id="meals-table"></div>
             <p class="meals-hint">
-                Conteggio da settembre. Si matura un buono nei giorni che contano come lavorati
+                Conteggio da settembre 2026, il saldo prosegue nel 2027. Si matura un buono nei giorni che contano come lavorati
                 e se ne spende uno per ogni giorno in ufficio. Un permesso sotto le 8h resta presenza.
             </p>
         </section>

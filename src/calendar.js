@@ -21,7 +21,7 @@ const ALL_DAY_CLASSES = [
 export function renderCalendar(container, handlers = {}) {
     container.replaceChildren();
 
-    for (const month of MONTHS_INFO) {
+    for (const month of MONTHS_INFO.filter(item => item.year === state.viewYear)) {
         const monthEl = document.createElement('div');
         monthEl.className = 'month';
 
@@ -41,7 +41,7 @@ export function renderCalendar(container, handlers = {}) {
         }
 
         // Celle vuote per allineare il 1° del mese alla settimana lun-dom.
-        const firstWeekday = new Date(2026, month.num, 1).getDay();
+        const firstWeekday = new Date(month.year, month.num, 1).getDay();
         const offset = firstWeekday === 0 ? 6 : firstWeekday - 1;
         for (let i = 0; i < offset; i++) {
             const empty = document.createElement('div');
@@ -50,7 +50,7 @@ export function renderCalendar(container, handlers = {}) {
         }
 
         for (let day = 1; day <= month.days; day++) {
-            grid.appendChild(createDayCell(month.num, day, handlers));
+            grid.appendChild(createDayCell(month.year, month.num, day, handlers));
         }
 
         monthEl.appendChild(grid);
@@ -58,8 +58,8 @@ export function renderCalendar(container, handlers = {}) {
     }
 }
 
-function createDayCell(monthIndex, day, handlers) {
-    const dateStr = dateKey(monthIndex, day);
+function createDayCell(year, monthIndex, day, handlers) {
+    const dateStr = dateKey(year, monthIndex, day);
     const dayEl = document.createElement('div');
     dayEl.className = 'day';
     dayEl.setAttribute('data-date', dateStr);

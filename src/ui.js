@@ -1,5 +1,5 @@
 import { BASE_MARKERS, MARKER_LABELS, MONTH_NAMES } from './constants.js';
-import { pages, recalcCounts, state, usedCount } from './state.js';
+import { maxCount, pages, recalcCounts, setMaxCount, state, usedCount } from './state.js';
 
 let toastTimer = null;
 
@@ -22,7 +22,7 @@ export function updateCountsUI() {
         });
         document.querySelectorAll(`[data-total="${type}"]`).forEach(el => {
             // Non toccare un totale mentre lo si sta modificando.
-            if (!el.querySelector('input')) el.innerText = formatAmount(state.maxCounts[type]);
+            if (!el.querySelector('input')) el.innerText = formatAmount(maxCount(type));
         });
     }
 }
@@ -65,7 +65,8 @@ export function initEditableTotals(onChange) {
 function startEditingTotal(el, type, onChange) {
     if (el.querySelector('input')) return;
 
-    const previous = state.maxCounts[type];
+    const year = state.viewYear;
+    const previous = maxCount(type, year);
     const input = document.createElement('input');
     input.type = 'number';
     input.min = '0';
@@ -94,7 +95,7 @@ function startEditingTotal(el, type, onChange) {
         // Un totale sotto quanto è già assegnato darebbe un residuo negativo.
         // Si ferma al minimo possibile invece di buttare via quanto digitato:
         // ritrovarsi il vecchio numero senza spiegazioni è peggio.
-        const used = usedCount(type);
+        const used = usedCount(type, year);
         if (value < used) {
             const unit = type === 'permesso' ? 'h' : '';
             showToast(`Totale fermato a ${used}${unit}: è quanto hai già assegnato.`, 'info');
@@ -105,7 +106,7 @@ function startEditingTotal(el, type, onChange) {
         // Il campo va tolto prima di ridisegnare: updateCountsUI salta i totali
         // che contengono un input, e senza questo il numero non tornerebbe più.
         input.remove();
-        state.maxCounts[type] = value;
+        setMaxCount(type, year, value);
         recalcCounts();
         onChange();
     }
@@ -244,8 +245,8 @@ export function askPermessoHours({ dates, existingHours }) {
 }
 
 function describeDay(dateStr) {
-    const [, month, day] = dateStr.split('-');
-    return `Giorno ${parseInt(day, 10)} ${MONTH_NAMES[parseInt(month, 10) - 1]} 2026`;
+    const [year, month, day] = dateStr.split('-');
+    return `Giorno ${parseInt(day, 10)} ${MONTH_NAMES[parseInt(month, 10) - 1]} ${year}`;
 }
 
 function closeModal(result) {

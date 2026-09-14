@@ -9,7 +9,7 @@ import {
     setRangePreview,
     updateDayUI
 } from './calendar.js';
-import { MARKER_LABELS, OVERLAY_MARKERS, YEAR } from './constants.js';
+import { MARKER_LABELS, OVERLAY_MARKERS, YEARS } from './constants.js';
 import { initMealsPanel, renderMealsPanel, syncMealInputs } from './meals.js';
 import { validateAssignment } from './rules.js';
 import {
@@ -22,13 +22,16 @@ import {
     isLocked,
     isWeekend,
     loadState,
+    maxCount,
     pages,
     recalcCounts,
     renamePage,
     saveState,
     setSaveHook,
+    setViewYear,
     state,
-    switchPage
+    switchPage,
+    usedCount
 } from './state.js';
 import { initSync, markLocalChange } from './sync.js';
 import {
@@ -69,10 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setSaveHook(markLocalChange);
     loadState();
 
-    renderCalendar(document.getElementById('calendar-container'), {
-        onDayDown: handleDayDown,
-        onDayEnter: handleDayEnter
-    });
+    renderYear();
 
     initMarkerCards();
     initPermessoModal();
@@ -100,6 +100,36 @@ document.addEventListener('DOMContentLoaded', () => {
     updateContainerClass();
 });
 
+// --- Anno mostrato -----------------------------------------------------
+
+function renderYear() {
+    renderCalendar(document.getElementById('calendar-container'), {
+        onDayDown: handleDayDown,
+        onDayEnter: handleDayEnter
+    });
+}
+
+function renderYearBar() {
+    const bar = document.getElementById('year-bar');
+    if (!bar) return;
+
+    bar.replaceChildren(...YEARS.map(year => {
+        const tab = document.createElement('button');
+        tab.type = 'button';
+        tab.className = `page-tab${year === state.viewYear ? ' active' : ''}`;
+        tab.innerText = year;
+        tab.addEventListener('click', () => {
+            if (year === state.viewYear) return;
+            setViewYear(year);
+            renderYear();
+            rebuildAll();
+        });
+        return tab;
+    }));
+
+    document.title = `Calendario Lavoro ${state.viewYear}`;
+}
+
 /** Riallinea tutta l'interfaccia dopo una sostituzione integrale dello stato. */
 function rebuildAll() {
     refreshAllDays();
@@ -114,6 +144,7 @@ function rebuildAll() {
 /** Rilegge da localStorage dopo che la sincronizzazione ha sostituito i dati. */
 function reloadFromStorage() {
     loadState();
+    renderYear();
     rebuildAll();
 }
 
@@ -129,9 +160,10 @@ function renderPagesBar() {
     }
     bar.appendChild(newPageButton());
 
-    // Il PDF stampato deve dire di quale calendario è.
+    // Il PDF stampato deve dire di quale calendario e di quale anno è.
     const printTitle = document.querySelector('.print-summary h2');
-    if (printTitle) printTitle.innerText = `Riepilogo ${activePage().name} · ${YEAR}`;
+    if (printTitle) printTitle.innerText = `Riepilogo ${activePage().name} · ${state.viewYear}`;
+    renderYearBar();
 }
 
 function pageTab(page) {
@@ -399,14 +431,6 @@ function applyOverlay(dates, marker) {
     }
 }
 
-function countAssigned(assignments, marker) {
-    let total = 0;
-    for (const date in assignments) {
-        if (assignments[date] === marker) total++;
-    }
-    return total;
-}
-
 function splitSelection(dates) {
     const eligible = [];
     let skippedLocked = 0;
@@ -428,15 +452,16 @@ function applyBase(dates, marker) {
     const { eligible, skippedLocked, skippedBlocked } = splitSelection(dates);
 
     const working = { ...state.assignments };
-    let used = countAssigned(working, marker);
     const applied = [];
     let stopMessage = null;
 
     for (const date of eligible) {
         if (working[date] === marker) continue;
 
-        if (used + 1 > state.maxCounts[marker]) {
-            stopMessage = `Giorni esauriti per ${MARKER_LABELS[marker]}.`;
+        // I totali sono per anno: conta l'anno del giorno, non quello mostrato.
+        const year = Number(date.slice(0, 4));
+        if (usedCount(marker, year, working) + 1 > maxCount(marker, year)) {
+            stopMessage = `Giorni esauriti per ${MARKER_LABELS[marker]} nel ${year}.`;
             break;
         }
 
@@ -447,7 +472,6 @@ function applyBase(dates, marker) {
         }
 
         working[date] = marker;
-        used++;
         applied.push(date);
     }
 

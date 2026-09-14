@@ -2,16 +2,18 @@ import {
     DEFAULT_MAX_COUNTS,
     DEFAULT_MEAL_VOUCHERS,
     DEFAULT_ROUTE,
+    DEFAULT_YEAR_COUNTS,
     HOLIDAYS,
     MONTHS_INFO,
     STATE_VERSION,
-    YEAR
+    YEARS
 } from './constants.js';
 
 const KEYS = {
     assignments: 'calendar_assignments',
     overlays: 'calendar_overlays',
     maxCounts: 'calendar_max_counts',
+    yearCounts: 'calendar_year_counts',
     permessoHours: 'calendar_permesso_hours',
     lockedDates: 'calendar_locked_dates',
     route: 'calendar_route',
@@ -31,6 +33,8 @@ export function setSaveHook(fn) {
 const SNAPSHOT_KEY = 'calendar_snapshot_v0';
 const PAGES_KEY = 'calendar_pages';
 const ACTIVE_PAGE_KEY = 'calendar_active_page';
+// Anno mostrato: preferenza del dispositivo, esclusa dalla sincronizzazione.
+export const VIEW_YEAR_KEY = 'calendar_view_year';
 
 /**
  * Pagine di calendario indipendenti. La prima ha id '' e usa le chiavi
@@ -63,18 +67,56 @@ export const state = {
     permessoHours: {},
     /** "YYYY-MM-DD" -> true */
     lockedDates: {},
+    /** Totali del primo anno, più il monte ore di permesso condiviso da tutti gli anni */
     maxCounts: { ...DEFAULT_MAX_COUNTS },
+    /** Totali degli anni successivi: { 2027: { ferie, missione, ... } } */
+    yearCounts: yearCountsWithDefaults(null),
+    /** Residui dell'anno mostrato */
     currentCounts: { ...DEFAULT_MAX_COUNTS },
     route: { ...DEFAULT_ROUTE },
     /** Buoni pasto: dotazione iniziale, media di giorni doppi e cosa matura */
     mealVouchers: { ...DEFAULT_MEAL_VOUCHERS },
     /** Giorni feriali dell'intervallo, ordinati: base per la regola dei consecutivi */
-    workingDays: []
+    workingDays: [],
+    /** Anno mostrato a schermo: decide mesi e contatori visibili */
+    viewYear: YEARS[0]
 };
 
-export function dateKey(monthIndex, day) {
+function yearCountsWithDefaults(saved) {
+    const out = {};
+    for (const [year, defaults] of Object.entries(DEFAULT_YEAR_COUNTS)) {
+        out[year] = { ...defaults, ...plainObject(saved?.[year]) };
+    }
+    return out;
+}
+
+/** Totale disponibile per un segnagiorno in un anno. Il permesso non si azzera mai. */
+export function maxCount(type, year = state.viewYear) {
+    if (type === 'permesso' || !state.yearCounts[year]) return state.maxCounts[type];
+    return state.yearCounts[year][type];
+}
+
+export function setMaxCount(type, year, value) {
+    if (type === 'permesso' || !state.yearCounts[year]) state.maxCounts[type] = value;
+    else state.yearCounts[year][type] = value;
+}
+
+export function setViewYear(year) {
+    if (!YEARS.includes(year)) return;
+    state.viewYear = year;
+    localStorage.setItem(VIEW_YEAR_KEY, String(year));
+    recalcCounts();
+}
+
+function loadViewYear() {
+    const saved = Number(localStorage.getItem(VIEW_YEAR_KEY));
+    const current = new Date().getFullYear();
+    state.viewYear = YEARS.includes(saved) ? saved : YEARS.includes(current) ? current : YEARS[0];
+}
+
+export function dateKey(year, monthIndex, day) {
     const month = String(monthIndex + 1).padStart(2, '0');
-    return `${YEAR}-${month}-${String(day).padStart(2, '0')}`;
+    return `${year}-${month}-${String(day).padStart(2, '0')}`;
 }
 
 export function isHoliday(dateStr) {
@@ -119,7 +161,7 @@ function initWorkingDays() {
     state.workingDays = [];
     MONTHS_INFO.forEach(month => {
         for (let day = 1; day <= month.days; day++) {
-            const dateStr = dateKey(month.num, day);
+            const dateStr = dateKey(month.year, month.num, day);
             if (!isWeekend(dateStr) && !isHoliday(dateStr)) {
                 state.workingDays.push(dateStr);
             }
@@ -162,6 +204,7 @@ export function saveState() {
     localStorage.setItem(storageKey(KEYS.assignments), JSON.stringify(state.assignments));
     localStorage.setItem(storageKey(KEYS.overlays), JSON.stringify(state.overlays));
     localStorage.setItem(storageKey(KEYS.maxCounts), JSON.stringify(state.maxCounts));
+    localStorage.setItem(storageKey(KEYS.yearCounts), JSON.stringify(state.yearCounts));
     localStorage.setItem(storageKey(KEYS.permessoHours), JSON.stringify(state.permessoHours));
     localStorage.setItem(storageKey(KEYS.lockedDates), JSON.stringify(state.lockedDates));
     localStorage.setItem(storageKey(KEYS.route), JSON.stringify(state.route));
@@ -176,6 +219,7 @@ function loadActivePage() {
     state.permessoHours = readJSON(storageKey(KEYS.permessoHours)) || {};
     state.lockedDates = readJSON(storageKey(KEYS.lockedDates)) || {};
     state.maxCounts = { ...DEFAULT_MAX_COUNTS, ...(readJSON(storageKey(KEYS.maxCounts)) || {}) };
+    state.yearCounts = yearCountsWithDefaults(readJSON(storageKey(KEYS.yearCounts)));
     state.route = { ...DEFAULT_ROUTE, ...(readJSON(storageKey(KEYS.route)) || {}) };
     state.mealVouchers = { ...DEFAULT_MEAL_VOUCHERS, ...(readJSON(storageKey(KEYS.mealVouchers)) || {}) };
     recalcCounts();
@@ -213,6 +257,7 @@ function retuneDefaults() {
 
 export function loadState() {
     initWorkingDays();
+    loadViewYear();
     snapshotLegacyState();
     loadPages();
     retuneDefaults();
@@ -302,19 +347,23 @@ export function deletePage(id) {
     return true;
 }
 
-/** Quanto è già stato consumato di un segnagiorno (ore per il permesso, giorni per gli altri). */
-export function usedCount(type) {
+/**
+ * Quanto è già stato consumato di un segnagiorno nell'anno: giorni, oppure ore
+ * per il permesso, che si contano su tutti gli anni perché il monte è unico.
+ */
+export function usedCount(type, year = state.viewYear, assignments = state.assignments) {
     let used = 0;
-    for (const date in state.assignments) {
-        if (state.assignments[date] !== type) continue;
-        used += type === 'permesso' ? (state.permessoHours[date] || 0) : 1;
+    for (const date in assignments) {
+        if (assignments[date] !== type) continue;
+        if (type === 'permesso') used += state.permessoHours[date] || 0;
+        else if (date.startsWith(`${year}-`)) used++;
     }
     return used;
 }
 
 export function recalcCounts() {
     for (const type in state.maxCounts) {
-        state.currentCounts[type] = state.maxCounts[type] - usedCount(type);
+        state.currentCounts[type] = maxCount(type) - usedCount(type);
     }
 }
 
@@ -322,12 +371,12 @@ export function serializeState() {
     return {
         version: STATE_VERSION,
         exportedAt: new Date().toISOString(),
-        year: YEAR,
         assignments: state.assignments,
         overlays: state.overlays,
         permessoHours: state.permessoHours,
         lockedDates: state.lockedDates,
         maxCounts: state.maxCounts,
+        yearCounts: state.yearCounts,
         route: state.route,
         mealVouchers: state.mealVouchers
     };
@@ -357,6 +406,7 @@ export function applyImportedState(payload) {
     state.permessoHours = plainObject(payload.permessoHours);
     state.lockedDates = plainObject(payload.lockedDates);
     state.maxCounts = { ...DEFAULT_MAX_COUNTS, ...plainObject(payload.maxCounts) };
+    state.yearCounts = yearCountsWithDefaults(plainObject(payload.yearCounts));
     state.route = { ...DEFAULT_ROUTE, ...plainObject(payload.route) };
     state.mealVouchers = { ...DEFAULT_MEAL_VOUCHERS, ...plainObject(payload.mealVouchers) };
 
@@ -370,6 +420,7 @@ export function resetState() {
     state.permessoHours = {};
     state.lockedDates = {};
     state.maxCounts = { ...DEFAULT_MAX_COUNTS };
+    state.yearCounts = yearCountsWithDefaults(null);
     state.route = { ...DEFAULT_ROUTE };
     state.mealVouchers = { ...DEFAULT_MEAL_VOUCHERS };
     recalcCounts();

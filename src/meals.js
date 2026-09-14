@@ -1,7 +1,8 @@
-import { MEAL_START_MONTH, MONTHS_INFO } from './constants.js';
+import { MEAL_START, MONTHS_INFO } from './constants.js';
 import { dateKey, isHoliday, isWeekend, saveState, state } from './state.js';
 
-const MEAL_MONTHS = MONTHS_INFO.filter(month => month.num >= MEAL_START_MONTH);
+const MEAL_MONTHS = MONTHS_INFO.filter(month =>
+    month.year > MEAL_START.year || (month.year === MEAL_START.year && month.num >= MEAL_START.num));
 
 /**
  * Giorno passato in ufficio: feriale, non festivo e senza assenze.
@@ -29,7 +30,7 @@ export function earnsVoucher(dateStr, config) {
 }
 
 /**
- * Bilancio mese per mese da settembre a dicembre.
+ * Bilancio mese per mese da settembre 2026 in poi: il saldo passa da un anno all'altro.
  * Si matura un buono nei giorni che contano come lavorati e se ne spende
  * uno per ogni giorno in ufficio, più la media di giorni a doppio buono.
  */
@@ -41,7 +42,7 @@ export function computeMeals(config = state.mealVouchers) {
         let spent = 0;
 
         for (let day = 1; day <= month.days; day++) {
-            const dateStr = dateKey(month.num, day);
+            const dateStr = dateKey(month.year, month.num, day);
             if (earnsVoucher(dateStr, config)) earned++;
             if (isOfficeDay(dateStr)) spent++;
         }
@@ -50,7 +51,7 @@ export function computeMeals(config = state.mealVouchers) {
         const extra = Math.min(config.doublePerMonth, spent);
         balance += earned - spent - extra;
 
-        return { name: month.name, earned, spent, extra, balance };
+        return { year: month.year, name: month.name, earned, spent, extra, balance };
     });
 
     return { months, final: balance, value: balance * config.value };
@@ -113,13 +114,16 @@ export function renderMealsPanel() {
     const container = document.getElementById('meals-table');
     if (!container) return;
 
-    const { months, final, value } = computeMeals();
+    const { months } = computeMeals();
+    const shown = months.filter(month => month.year === state.viewYear);
+    const final = shown.length ? shown[shown.length - 1].balance : state.mealVouchers.initial;
+    const value = final * state.mealVouchers.value;
 
     const table = document.createElement('table');
     table.className = 'meals-grid';
     table.appendChild(row('th', ['Mese', 'Maturati', 'Spesi', 'Doppi', 'Saldo']));
 
-    for (const month of months) {
+    for (const month of shown) {
         table.appendChild(row('td', [
             month.name,
             `+${month.earned}`,
@@ -133,7 +137,7 @@ export function renderMealsPanel() {
 
     const summary = document.getElementById('meals-summary');
     if (summary) {
-        summary.innerText = `${formatNumber(final)} buoni a fine dicembre · ${formatEuro(value)} di spesa`;
+        summary.innerText = `${formatNumber(final)} buoni a fine dicembre ${state.viewYear} · ${formatEuro(value)} di spesa`;
     }
 }
 

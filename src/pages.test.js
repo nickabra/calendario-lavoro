@@ -75,11 +75,12 @@ test('i buoni pasto contano presenze, spese e giorni doppi', async () => {
     // Resta la dotazione iniziale meno la media dei giorni doppi.
     const base = computeMeals({ ...state.mealVouchers, doublePerMonth: 0 });
     assert.equal(base.final, 35, 'senza giorni doppi il saldo non si muove');
-    assert.equal(base.months.length, 4, 'si contano settembre, ottobre, novembre e dicembre');
+    assert.equal(base.months.length, 16, 'da settembre 2026 a dicembre 2027');
     assert.deepEqual(base.months.map(m => m.earned), base.months.map(m => m.spent));
 
     const withDoubles = computeMeals({ ...state.mealVouchers, doublePerMonth: 1.5 });
-    assert.equal(withDoubles.final, 35 - 6, '1,5 doppi per 4 mesi');
+    assert.equal(withDoubles.months[3].balance, 35 - 6, '1,5 doppi per 4 mesi a fine 2026');
+    assert.equal(withDoubles.final, 35 - 24, 'il saldo prosegue nel 2027');
 
     // Una settimana di ferie: non matura e non spende, il saldo non cambia.
     for (const date of ['2026-09-07', '2026-09-08', '2026-09-09', '2026-09-10', '2026-09-11']) {
@@ -107,4 +108,42 @@ test('i buoni pasto contano presenze, spese e giorni doppi', async () => {
     assert.equal(intero.months[0].spent, base.months[0].spent - 7);
 
     deletePage(empty.id);
+});
+
+test('il 2027 riparte da zero, tranne il monte ore di permesso', async () => {
+    const { maxCount, recalcCounts, setViewYear } = await import('./state.js');
+    const { HOLIDAYS } = await import('./constants.js');
+    const page = addPage('Anni', null);
+
+    assert.ok(state.workingDays.includes('2027-01-04'), 'i giorni del 2027 fanno parte del calendario');
+    assert.ok(!state.workingDays.includes('2027-03-29'), 'Pasquetta è festiva');
+    assert.ok(HOLIDAYS['2027-01-06']);
+
+    state.assignments['2026-12-01'] = 'ferie';
+    state.assignments['2026-12-02'] = 'permesso';
+    state.permessoHours['2026-12-02'] = 3;
+
+    setViewYear(2026);
+    assert.equal(state.currentCounts.ferie, 9);
+    assert.equal(state.currentCounts.permesso, 8);
+
+    setViewYear(2027);
+    assert.deepEqual(
+        ['ferie', 'missione', 'smartworking', 'exfest'].map(type => maxCount(type)),
+        [20, 60, 96, 4]
+    );
+    assert.equal(state.currentCounts.ferie, 20, 'le ferie del 2026 non pesano sul 2027');
+    assert.equal(state.currentCounts.permesso, 8, 'le ore di permesso restano quelle avanzate');
+
+    state.assignments['2027-01-04'] = 'ferie';
+    state.yearCounts[2027].ferie = 18;
+    saveState();
+    switchPage('');
+    switchPage(page.id);
+    recalcCounts();
+    assert.equal(state.currentCounts.ferie, 17, 'i totali del 2027 si salvano con la pagina');
+    assert.equal(maxCount('ferie', 2026), 10);
+
+    setViewYear(2026);
+    deletePage(page.id);
 });
