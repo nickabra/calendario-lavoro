@@ -383,6 +383,12 @@ kbd {
     transition: background 0.15s ease, border-color 0.15s ease;
     position: relative;
     user-select: none;
+    /* Senza strumento il dito deve poter scorrere la pagina anche partendo
+       da un giorno; il blocco serve solo al trascinamento di selezione. */
+    touch-action: pan-y;
+}
+
+.app-container:not(.no-marker-active) .day {
     touch-action: none;
 }
 
