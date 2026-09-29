@@ -24,7 +24,21 @@ export function updateCountsUI() {
             // Non toccare un totale mentre lo si sta modificando.
             if (!el.querySelector('input')) el.innerText = formatAmount(maxCount(type));
         });
+
+        // Il residuo sconta anche i giorni solo pianificati: il portale del
+        // lavoro conta invece quelli già fruiti, ed è questo secondo numero.
+        const fruiti = usedCount(type, state.viewYear, state.assignments, todayKey());
+        document.querySelectorAll(`[data-used="${type}"]`).forEach(el => {
+            el.innerText = fruiti ? `· ${formatAmount(fruiti)}${type === 'permesso' ? 'h' : ''} fruiti` : '';
+            el.hidden = !fruiti;
+        });
     }
+}
+
+function todayKey() {
+    const now = new Date();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    return `${now.getFullYear()}-${month}-${String(now.getDate()).padStart(2, '0')}`;
 }
 
 function formatAmount(value) {

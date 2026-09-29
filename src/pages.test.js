@@ -127,6 +127,11 @@ test('il 2027 riparte da zero, tranne il monte ore di permesso', async () => {
     assert.equal(state.currentCounts.ferie, 9);
     assert.equal(state.currentCounts.permesso, 8);
 
+    const { usedCount } = await import('./state.js');
+    assert.equal(usedCount('ferie', 2026, state.assignments, '2026-11-30'), 0, 'il pianificato non è ancora fruito');
+    assert.equal(usedCount('ferie', 2026, state.assignments, '2026-12-01'), 1);
+    assert.equal(usedCount('permesso', 2026, state.assignments, '2026-12-01'), 0, 'il 2 dicembre è ancora di là da venire');
+
     setViewYear(2027);
     assert.deepEqual(
         ['ferie', 'missione', 'smartworking', 'exfest'].map(type => maxCount(type)),

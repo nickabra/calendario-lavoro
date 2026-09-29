@@ -32,11 +32,11 @@
         <div class="print-summary" id="print-summary">
             <h2>Riepilogo Assegnazioni</h2>
             <div class="print-counters">
-                <div>Ferie rimanenti: <span data-count="ferie">10</span>/<span data-total="ferie">10</span></div>
-                <div>Missioni rimanenti: <span data-count="missione">15</span>/<span data-total="missione">15</span></div>
-                <div>Smartworking rimanenti: <span data-count="smartworking">40</span>/<span data-total="smartworking">40</span></div>
-                <div>Permessi rimanenti: <span data-count="permesso">11</span>h/<span data-total="permesso">11</span>h</div>
-                <div>Ex festività rimanenti: <span data-count="exfest">1</span>/<span data-total="exfest">1</span></div>
+                <div>Ferie rimanenti: <span data-count="ferie">10</span>/<span data-total="ferie">10</span> <span class="used-note" data-used="ferie" hidden></span></div>
+                <div>Missioni rimanenti: <span data-count="missione">15</span>/<span data-total="missione">15</span> <span class="used-note" data-used="missione" hidden></span></div>
+                <div>Smartworking rimanenti: <span data-count="smartworking">40</span>/<span data-total="smartworking">40</span> <span class="used-note" data-used="smartworking" hidden></span></div>
+                <div>Permessi rimanenti: <span data-count="permesso">11</span>h/<span data-total="permesso">11</span>h <span class="used-note" data-used="permesso" hidden></span></div>
+                <div>Ex festività rimanenti: <span data-count="exfest">1</span>/<span data-total="exfest">1</span> <span class="used-note" data-used="exfest" hidden></span></div>
             </div>
             <div class="print-legend">
                 <span><i class="legend-swatch ferie-color"></i>Ferie</span>
@@ -55,6 +55,7 @@
                 <span class="marker-title">Ferie</span>
                 <span class="marker-badge">
                     <span data-count="ferie">10</span>/<span class="editable-total" data-total="ferie" title="Modifica il totale">10</span>
+                    <span class="used-note" data-used="ferie" hidden></span>
                     <span class="edit-icon" data-edit="ferie">✏️</span>
                 </span>
             </div>
@@ -63,6 +64,7 @@
                 <span class="marker-title">Missione</span>
                 <span class="marker-badge">
                     <span data-count="missione">15</span>/<span class="editable-total" data-total="missione" title="Modifica il totale">15</span>
+                    <span class="used-note" data-used="missione" hidden></span>
                     <span class="edit-icon" data-edit="missione">✏️</span>
                 </span>
             </div>
@@ -71,6 +73,7 @@
                 <span class="marker-title">Smart</span>
                 <span class="marker-badge">
                     <span data-count="smartworking">40</span>/<span class="editable-total" data-total="smartworking" title="Modifica il totale">40</span>
+                    <span class="used-note" data-used="smartworking" hidden></span>
                     <span class="edit-icon" data-edit="smartworking">✏️</span>
                 </span>
             </div>
@@ -79,6 +82,7 @@
                 <span class="marker-title">Permesso</span>
                 <span class="marker-badge">
                     <span data-count="permesso">11</span>h/<span class="editable-total" data-total="permesso" title="Modifica il totale">11</span>h
+                    <span class="used-note" data-used="permesso" hidden></span>
                     <span class="edit-icon" data-edit="permesso">✏️</span>
                 </span>
             </div>
@@ -87,6 +91,7 @@
                 <span class="marker-title">Ex Fest.</span>
                 <span class="marker-badge">
                     <span data-count="exfest">1</span>/<span class="editable-total" data-total="exfest" title="Modifica il totale">1</span>
+                    <span class="used-note" data-used="exfest" hidden></span>
                     <span class="edit-icon" data-edit="exfest">✏️</span>
                 </span>
             </div>

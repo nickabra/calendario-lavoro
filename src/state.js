@@ -350,11 +350,14 @@ export function deletePage(id) {
 /**
  * Quanto è già stato consumato di un segnagiorno nell'anno: giorni, oppure ore
  * per il permesso, che si contano su tutti gli anni perché il monte è unico.
+ * `untilDate` ferma il conteggio a una data: serve a distinguere ciò che è già
+ * stato fruito da ciò che è soltanto pianificato.
  */
-export function usedCount(type, year = state.viewYear, assignments = state.assignments) {
+export function usedCount(type, year = state.viewYear, assignments = state.assignments, untilDate = null) {
     let used = 0;
     for (const date in assignments) {
         if (assignments[date] !== type) continue;
+        if (untilDate && date > untilDate) continue;
         if (type === 'permesso') used += state.permessoHours[date] || 0;
         else if (date.startsWith(`${year}-`)) used++;
     }

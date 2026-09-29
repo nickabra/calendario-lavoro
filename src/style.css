@@ -232,6 +232,14 @@ kbd {
     color: #f1f5f9;
 }
 
+/* Giorni già fruiti: il residuo sconta anche quelli solo pianificati. */
+.used-note {
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
 .marker-badge {
     font-size: 0.78rem;
     color: var(--text-secondary);
