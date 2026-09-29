@@ -73,11 +73,13 @@ function createDayCell(year, monthIndex, day, handlers) {
     if (isWeekend(dateStr)) dayEl.classList.add('weekend', 'blocked');
     if (isHoliday(dateStr)) dayEl.classList.add('holiday', 'blocked');
 
+    // Il preventDefault lo decide chi gestisce l'evento: senza strumento
+    // selezionato il tocco deve restare della pagina, che così scorre.
     if (handlers.onDayDown) {
-        dayEl.addEventListener('pointerdown', (event) => {
-            event.preventDefault();
-            handlers.onDayDown(dateStr, dayEl, event);
-        });
+        dayEl.addEventListener('pointerdown', (event) => handlers.onDayDown(dateStr, dayEl, event));
+    }
+    if (handlers.onDayClick) {
+        dayEl.addEventListener('click', () => handlers.onDayClick(dateStr, dayEl));
     }
     if (handlers.onDayEnter) {
         dayEl.addEventListener('pointerenter', () => handlers.onDayEnter(dateStr, dayEl));

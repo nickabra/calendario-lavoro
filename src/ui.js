@@ -27,10 +27,14 @@ export function updateCountsUI() {
 
         // Il residuo sconta anche i giorni solo pianificati: il portale del
         // lavoro conta invece quelli già fruiti, ed è questo secondo numero.
+        // Compare appena c'è qualcosa segnato, anche quando è tutto da venire:
+        // uno "0 fruiti" dice che quei giorni sono pianificati e non ancora spesi.
+        const segnati = usedCount(type, state.viewYear);
         const fruiti = usedCount(type, state.viewYear, state.assignments, todayKey());
+        const unit = type === 'permesso' ? 'h' : '';
         document.querySelectorAll(`[data-used="${type}"]`).forEach(el => {
-            el.innerText = fruiti ? `· ${formatAmount(fruiti)}${type === 'permesso' ? 'h' : ''} fruiti` : '';
-            el.hidden = !fruiti;
+            el.innerText = segnati ? `· ${formatAmount(fruiti)}${unit} fruiti` : '';
+            el.hidden = !segnati;
         });
     }
 }

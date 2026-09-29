@@ -140,7 +140,8 @@ function watchDayChange() {
 function renderYear() {
     renderCalendar(document.getElementById('calendar-container'), {
         onDayDown: handleDayDown,
-        onDayEnter: handleDayEnter
+        onDayEnter: handleDayEnter,
+        onDayClick: handleDayClick
     });
 }
 
@@ -292,10 +293,11 @@ function initMarkerCards() {
     });
 }
 
+/** Ricliccare lo strumento già attivo lo deseleziona. */
 function selectMarker(type) {
-    currentMarker = type;
+    currentMarker = type === currentMarker ? null : type;
     document.querySelectorAll('.marker-card').forEach(card => {
-        card.classList.toggle('active', card.dataset.type === type);
+        card.classList.toggle('active', card.dataset.type === currentMarker);
     });
     updateContainerClass();
 }
@@ -346,22 +348,23 @@ function initKeyboard() {
 // --- Selezione dei giorni (clic singolo e trascinamento) ---------------
 
 function handleDayDown(dateStr, dayEl, event) {
-    if (event.button !== 0) return;
-    closeFlightPopover();
+    // Senza strumento il calendario non si tocca: l'evento resta alla pagina,
+    // che così scorre anche partendo dal dito appoggiato su un giorno.
+    if (event.button !== 0 || !currentMarker) return;
 
-    if (!currentMarker) {
-        if (state.overlays[dateStr]) {
-            openFlightPopover(dateStr, dayEl);
-        } else {
-            showToast('Scegli uno strumento qui sopra. I giorni con ✈ mostrano i voli anche senza strumento selezionato.', 'info');
-        }
-        return;
-    }
+    event.preventDefault();
+    closeFlightPopover();
 
     dragging = true;
     dragStart = dateStr;
     dragEnd = dateStr;
     setRangePreview([dateStr]);
+}
+
+/** Senza strumento un tocco secco sui giorni con volo ne mostra i collegamenti. */
+function handleDayClick(dateStr, dayEl) {
+    if (currentMarker || !state.overlays[dateStr]) return;
+    openFlightPopover(dateStr, dayEl);
 }
 
 function handleDayEnter(dateStr) {
