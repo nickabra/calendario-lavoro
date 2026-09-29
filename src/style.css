@@ -232,6 +232,11 @@ kbd {
     color: #f1f5f9;
 }
 
+/* Giorno passato: bloccato in automatico, senza lucchetto disegnato sopra. */
+.day.past {
+    opacity: 0.45;
+}
+
 /* Giorni già fruiti: il residuo sconta anche quelli solo pianificati. */
 .used-note {
     font-size: 0.72rem;

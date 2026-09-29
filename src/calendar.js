@@ -5,13 +5,14 @@ import {
     formatDateItalian,
     holidayName,
     isHoliday,
+    isPast,
     isWeekend,
     state
 } from './state.js';
 
 const ALL_DAY_CLASSES = [
     'ferie', 'missione', 'smartworking', 'permesso', 'exfest',
-    'ct-mi', 'mi-ct', 'locked-date', 'range-preview'
+    'ct-mi', 'mi-ct', 'locked-date', 'past', 'range-preview'
 ];
 
 /**
@@ -107,9 +108,13 @@ export function updateDayUI(dayEl, dateStr) {
         dayEl.appendChild(badge('flight-badge', '✈'));
     }
 
+    // Il lucchetto resta il segno dei blocchi messi a mano: i giorni passati
+    // sono già tutti bloccati, disegnarne uno su ciascuno sarebbe solo rumore.
     if (state.lockedDates[dateStr]) {
         dayEl.classList.add('locked-date');
         dayEl.appendChild(badge('lock-badge', '🔒'));
+    } else if (isPast(dateStr)) {
+        dayEl.classList.add('past', 'blocked');
     }
 
     if (wasPreview) dayEl.classList.add('range-preview');
@@ -137,6 +142,7 @@ function buildTooltip(dateStr, marker, overlay) {
 
     if (overlay) parts.push(`Volo ${legLabel(overlay, state.route)}`);
     if (state.lockedDates[dateStr]) parts.push('Bloccata');
+    else if (isPast(dateStr)) parts.push('Giorno passato');
 
     return parts.join(' · ');
 }

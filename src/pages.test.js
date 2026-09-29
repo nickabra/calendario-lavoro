@@ -110,6 +110,17 @@ test('i buoni pasto contano presenze, spese e giorni doppi', async () => {
     deletePage(empty.id);
 });
 
+test('i giorni passati risultano bloccati', async () => {
+    const { isLocked, isPast, todayKey } = await import('./state.js');
+    const shift = days => new Date(Date.now() + days * 86400000).toISOString().slice(0, 10);
+
+    assert.ok(isPast(shift(-1)), 'ieri è passato');
+    assert.ok(!isPast(todayKey()), 'oggi no: si modifica fino a mezzanotte');
+    assert.ok(!isPast(shift(2)));
+    assert.ok(isLocked(shift(-1)));
+    assert.ok(!isLocked(shift(2)));
+});
+
 test('il 2027 riparte da zero, tranne il monte ore di permesso', async () => {
     const { maxCount, recalcCounts, setViewYear } = await import('./state.js');
     const { HOLIDAYS } = await import('./constants.js');

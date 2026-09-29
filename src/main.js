@@ -20,6 +20,7 @@ import {
     formatDateItalian,
     isHoliday,
     isLocked,
+    isPast,
     isWeekend,
     loadState,
     maxCount,
@@ -30,6 +31,7 @@ import {
     setSaveHook,
     setViewYear,
     state,
+    todayKey,
     switchPage,
     usedCount
 } from './state.js';
@@ -90,6 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initSync(reloadFromStorage);
     initKeyboard();
     initGlobalPointerHandlers();
+    watchDayChange();
 
     document.getElementById('btn-export-pdf')?.addEventListener('click', () => window.print());
 
@@ -99,6 +102,38 @@ document.addEventListener('DOMContentLoaded', () => {
     renderPagesBar();
     updateContainerClass();
 });
+
+/**
+ * A mezzanotte il giorno appena finito diventa passato, quindi bloccato.
+ * Il timer copre l'app lasciata aperta; il controllo sul ritorno in primo piano
+ * copre il telefono, che i timer li congela appena l'app va sullo sfondo.
+ */
+function watchDayChange() {
+    let shownDay = todayKey();
+
+    const refresh = () => {
+        if (todayKey() === shownDay) return;
+        shownDay = todayKey();
+        refreshAllDays();
+        updateCountsUI();
+    };
+
+    const scheduleMidnight = () => {
+        const now = new Date();
+        // Un minuto dopo la mezzanotte: qualche secondo di margine evita di
+        // svegliarsi un attimo troppo presto e rileggere ancora la data di ieri.
+        const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 1);
+        setTimeout(() => {
+            refresh();
+            scheduleMidnight();
+        }, next - now);
+    };
+
+    scheduleMidnight();
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') refresh();
+    });
+}
 
 // --- Anno mostrato -----------------------------------------------------
 
@@ -365,8 +400,14 @@ function applyMarker(dates) {
 }
 
 function applyLock(dates) {
-    if (dates.length === 1) {
-        const date = dates[0];
+    const editable = dates.filter(date => !isPast(date));
+    if (editable.length === 0) {
+        showToast('I giorni passati sono già bloccati: non si modificano più.', 'info');
+        return;
+    }
+
+    if (editable.length === 1) {
+        const date = editable[0];
         if (state.lockedDates[date]) {
             delete state.lockedDates[date];
             showToast(`${formatDateItalian(date)} sbloccata 🔓`, 'info');
@@ -375,8 +416,8 @@ function applyLock(dates) {
             showToast(`${formatDateItalian(date)} bloccata 🔒`, 'success');
         }
     } else {
-        for (const date of dates) state.lockedDates[date] = true;
-        showToast(`${dates.length} giorni bloccati 🔒`, 'success');
+        for (const date of editable) state.lockedDates[date] = true;
+        showToast(`${editable.length} giorni bloccati 🔒`, 'success');
     }
     commit(dates);
 }

@@ -1,5 +1,5 @@
 import { BASE_MARKERS, MARKER_LABELS, MONTH_NAMES } from './constants.js';
-import { maxCount, pages, recalcCounts, setMaxCount, state, usedCount } from './state.js';
+import { maxCount, pages, recalcCounts, setMaxCount, state, todayKey, usedCount } from './state.js';
 
 let toastTimer = null;
 
@@ -33,12 +33,6 @@ export function updateCountsUI() {
             el.hidden = !fruiti;
         });
     }
-}
-
-function todayKey() {
-    const now = new Date();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    return `${now.getFullYear()}-${month}-${String(now.getDate()).padStart(2, '0')}`;
 }
 
 function formatAmount(value) {

@@ -133,8 +133,21 @@ export function isWeekend(dateStr) {
     return day === 0 || day === 6;
 }
 
+/** Data di oggi come "YYYY-MM-DD", secondo l'orologio locale. */
+export function todayKey() {
+    const now = new Date();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    return `${now.getFullYear()}-${month}-${String(now.getDate()).padStart(2, '0')}`;
+}
+
+/** Un giorno già passato: a mezzanotte quello appena finito lo diventa. */
+export function isPast(dateStr) {
+    return dateStr < todayKey();
+}
+
+/** I giorni passati sono bloccati come quelli bloccati a mano: il passato non si pianifica. */
 export function isLocked(dateStr) {
-    return !!state.lockedDates[dateStr];
+    return !!state.lockedDates[dateStr] || isPast(dateStr);
 }
 
 export function formatDateItalian(dateStr) {
