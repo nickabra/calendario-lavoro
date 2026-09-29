@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+    <defs>
+        <linearGradient id="sfondo" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#2563eb"/>
+            <stop offset="1" stop-color="#1e3a8a"/>
+        </linearGradient>
+    </defs>
+
+    <rect width="512" height="512" rx="104" fill="url(#sfondo)"/>
+
+    <!-- Anelli del calendario -->
+    <rect x="168" y="92" width="30" height="70" rx="15" fill="#cbd5e1"/>
+    <rect x="314" y="92" width="30" height="70" rx="15" fill="#cbd5e1"/>
+
+    <!-- Foglio -->
+    <rect x="96" y="124" width="320" height="292" rx="36" fill="#f8fafc"/>
+    <path d="M96 160a36 36 0 0 1 36-36h248a36 36 0 0 1 36 36v38H96z" fill="#0f172a"/>
+
+    <!-- Giorni: i colori dei segnagiorni dell'app -->
+    <g>
+        <circle cx="160" cy="258" r="24" fill="#ef4444"/>
+        <circle cx="232" cy="258" r="24" fill="#f59e0b"/>
+        <circle cx="304" cy="258" r="24" fill="#22c55e"/>
+        <circle cx="376" cy="258" r="24" fill="#cbd5e1"/>
+        <circle cx="160" cy="342" r="24" fill="#cbd5e1"/>
+        <circle cx="232" cy="342" r="24" fill="#8b5cf6"/>
+        <circle cx="304" cy="342" r="24" fill="#22c55e"/>
+        <circle cx="376" cy="342" r="24" fill="#cbd5e1"/>
+    </g>
+</svg>
